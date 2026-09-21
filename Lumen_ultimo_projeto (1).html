@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LUMEN — A precisão em suas mãos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+  /* =====================================================
+     TOKENS — tema, cor, movimento
+  ===================================================== */
+  :root{
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --bg:#ffffff; --bg-soft:#f4f4f6; --surface:#fbfbfc; --glass: rgba(255,255,255,.6);
+    --ink:#15161a; --ink-soft:#55565c; --line:#e3e3e6;
+    --accent:#3d6bff; --accent-ink:#ffffff; --star:#ffb400; --danger:#c1432e;
+    --hero-bg:#0a0b0d; --hero-ink:#f5f5f7; --hero-soft:#a4a5ab;
+    --card-shadow: 0 1px 2px rgba(20,20,25,.04), 0 12px 28px rgba(20,20,25,.06);
+    --ease-fluid: cubic-bezier(.16,1,.3,1);
+    --ease-snap: cubic-bezier(.2,.8,.2,1);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e0f12; --bg-soft:#16171b; --surface:#141519; --glass: rgba(20,21,25,.55);
+      --ink:#f2f2f4; --ink-soft:#a4a5ac; --line:#26272c;
+      --accent:#6f92ff; --accent-ink:#0a0b0d;
+      --hero-bg:#000000; --hero-ink:#f5f5f7; --hero-soft:#85868c;
+      --card-shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e0f12; --bg-soft:#16171b; --surface:#141519; --glass: rgba(20,21,25,.55);
+    --ink:#f2f2f4; --ink-soft:#a4a5ac; --line:#26272c;
+    --accent:#6f92ff; --accent-ink:#0a0b0d;
+    --hero-bg:#000000; --hero-ink:#f5f5f7; --hero-soft:#85868c;
+    --card-shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.35);
+  }
+  html.high-contrast{ --ink-soft:#000000; --line:#000000; }
+  html.high-contrast[data-theme],
+  html.high-contrast:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark){ html.high-contrast{ --ink-soft:#ffffff; --line:#ffffff; } }
+
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; scroll-padding-top: calc(76px + env(safe-area-inset-top,0px)); }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',-apple-system,sans-serif; -webkit-font-smoothing:antialiased; }
+  body.locked, body.pp-locked{ overflow:hidden; }
+  h1,h2,h3{ font-family:'Manrope','Inter',sans-serif; letter-spacing:-0.02em; margin:0; }
+  p{ margin:0; }
+  img,svg{ max-width:100%; display:block; }
+  a{ color:inherit; text-decoration:none; }
+  button, select, input, textarea{ font:inherit; color:inherit; }
+  ul{ list-style:none; margin:0; padding:0; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 28px; width:100%; }
+
+  /* Redução de movimento — via SO ou via preferência manual salva */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
+  html.reduce-motion *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+
+  /* Foco visível consistente (WCAG 2.4.7) */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+    outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px;
+  }
+
+  .skip-link{
+    position:fixed; top:-60px; left:16px; z-index:2000; background:var(--ink); color:var(--bg);
+    padding:12px 20px; border-radius:0 0 12px 12px; font-weight:700; font-size:14px; transition: top .2s var(--ease-snap);
+  }
+  .skip-link:focus{ top:0; }
+
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+  /* =====================================================
+     BOTÕES
+  ===================================================== */
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 30px; border-radius:999px;
+    font-weight:600; font-size:15px; border:1px solid transparent; cursor:pointer;
+    transition: transform .3s var(--ease-fluid), box-shadow .3s var(--ease-fluid), background .25s ease; -webkit-tap-highlight-color:transparent; }
+  .btn-primary{ background:var(--accent); color:var(--accent-ink); }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(61,107,255,.35); }
+  .btn-primary:active{ transform:translateY(0) scale(.98); }
+  .btn-ghost{ background:transparent; color:var(--hero-ink); border-color:rgba(255,255,255,.28); }
+  .btn-ghost:hover{ background:rgba(255,255,255,.08); transform:translateY(-2px); }
+  .btn-outline{ background:transparent; color:var(--ink); border-color:var(--line); }
+  .btn-outline:hover{ background:var(--bg-soft); transform:translateY(-2px); }
+  .btn-sm{ padding:10px 22px; font-size:13.5px; }
+  .btn-block{ width:100%; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+
+  /* =====================================================
+     INTRO
+  ===================================================== */
+  .intro{ position:fixed; inset:0; z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:40px;
+    background: radial-gradient(130% 140% at 50% 0%, #1c1d21 0%, #000 68%); padding:24px; overflow:hidden;
+    isolation:isolate; transition: opacity .85s var(--ease-fluid), transform .85s var(--ease-fluid), visibility .85s; }
+  .intro::before,.intro::after{ content:''; position:absolute; border-radius:50%; pointer-events:none; z-index:-1; filter:blur(3px); }
+  .intro::before{ width:58vmax; height:58vmax; left:50%; top:43%; transform:translate(-50%,-50%); background:radial-gradient(circle, rgba(91,125,255,.16) 0%, rgba(91,125,255,.055) 35%, transparent 68%); animation:introAura 5.5s ease-in-out infinite; }
+  .intro::after{ width:28vmax; height:28vmax; left:18%; top:25%; background:radial-gradient(circle, rgba(255,255,255,.08), transparent 68%); animation:introOrb 8s ease-in-out infinite alternate; }
+  .intro-particles{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:-1; }
+  .intro-particles span{ position:absolute; width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,.55); box-shadow:0 0 12px rgba(125,157,255,.65); animation:introFloat linear infinite; }
+  .intro-particles span:nth-child(1){left:12%;top:24%;animation-duration:7s;animation-delay:-2s}.intro-particles span:nth-child(2){left:24%;top:72%;animation-duration:9s;animation-delay:-5s}.intro-particles span:nth-child(3){left:39%;top:17%;animation-duration:8s;animation-delay:-1s}.intro-particles span:nth-child(4){left:58%;top:76%;animation-duration:10s;animation-delay:-6s}.intro-particles span:nth-child(5){left:73%;top:28%;animation-duration:7.5s;animation-delay:-3s}.intro-particles span:nth-child(6){left:87%;top:66%;animation-duration:8.5s;animation-delay:-4s}.intro-particles span:nth-child(7){left:8%;top:52%;animation-duration:11s;animation-delay:-8s}.intro-particles span:nth-child(8){left:92%;top:42%;animation-duration:9.5s;animation-delay:-2s}
+  @keyframes introAura{0%,100%{transform:translate(-50%,-50%) scale(.94);opacity:.7}50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}}
+  @keyframes introOrb{0%{transform:translate(0,0) scale(.8);opacity:.35}100%{transform:translate(48vw,22vh) scale(1.25);opacity:.8}}
+  @keyframes introFloat{0%{transform:translate3d(0,20px,0);opacity:0}15%{opacity:.8}50%{transform:translate3d(18px,-30px,0);opacity:.45}85%{opacity:.8}100%{transform:translate3d(-8px,-90px,0);opacity:0}}
+  .intro.opening{ opacity:0; transform:scale(1.07); pointer-events:none; }
+  .intro.hidden{ visibility:hidden; }
+  .intro-caption{ text-align:center; color:var(--hero-soft); }
+  .intro-caption .tiny{ font-size:12.5px; letter-spacing:.02em; }
+  .intro-logo{ position:relative; font-family:'Manrope',sans-serif; font-weight:800; font-size:24px; color:#fff;
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.18); padding:17px 36px; border-radius:999px; cursor:pointer;
+    transition: transform .3s var(--ease-fluid), background .25s ease; }
+  .intro-logo span{ color:#7d9dff; }
+  .intro-logo:hover{ transform:translateY(-2px); background:rgba(255,255,255,.12); }
+  .intro-logo:active{ transform:translateY(0) scale(.97); }
+  .intro-logo::before{ content:''; position:absolute; inset:-9px; border-radius:999px; border:1px solid rgba(255,255,255,.22); animation:pulseRing 2.6s ease-out infinite; }
+  @keyframes pulseRing{ 0%{ transform:scale(1); opacity:.65; } 100%{ transform:scale(1.38); opacity:0; } }
+  .intro.opening .phone3d{ animation-play-state:paused; }
+  .intro.opening .screen::after{ content:''; position:absolute; inset:0; background:#fff; opacity:0; animation:flashOn .55s ease forwards; }
+  @keyframes flashOn{ 0%{opacity:0;} 55%{opacity:1;} 100%{opacity:0;} }
+
+  /* =====================================================
+     NAV + PAINEL DE ACESSIBILIDADE
+  ===================================================== */
+  header.nav{ position:sticky; top:env(safe-area-inset-top,0px); z-index:80;
+    backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
+    background: color-mix(in srgb, var(--bg) 72%, transparent); border-bottom:1px solid var(--line); }
+  .nav-row{ display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .logo{ font-family:'Manrope',sans-serif; font-weight:800; font-size:19px; letter-spacing:-.01em; background:none; border:none; cursor:pointer; color:var(--ink); padding:0; }
+  .logo span{ color:var(--accent); }
+  nav.links{ display:flex; gap:8px; }
+  nav.links a{ font-size:14px; font-weight:600; color:var(--ink-soft); padding:9px 16px; border-radius:999px; transition: color .2s, background .2s; }
+  nav.links a:hover{ color:var(--ink); background:var(--bg-soft); }
+  nav.links a[aria-current="page"]{ color:var(--ink); background:var(--bg-soft); }
+  .nav-actions{ display:flex; align-items:center; gap:10px; }
+  @media (max-width:780px){ nav.links{ display:none; } }
+
+  .a11y-btn{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-soft); border:1px solid var(--line); border-radius:999px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; }
+  .a11y-panel{ position:absolute; right:28px; top:64px; z-index:90; background:var(--surface); border:1px solid var(--line); border-radius:20px;
+    box-shadow:var(--card-shadow); padding:18px 20px; width:250px; }
+  .a11y-panel[hidden]{ display:none; }
+  .a11y-panel h4{ font-size:13px; font-weight:700; margin-bottom:12px; }
+  .a11y-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 0; font-size:13.5px; }
+  .switch{ position:relative; width:40px; height:24px; flex-shrink:0; }
+  .switch input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }
+  .switch .track{ position:absolute; inset:0; background:var(--line); border-radius:999px; transition: background .25s var(--ease-fluid); }
+  .switch .thumb{ position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3); transition: transform .25s var(--ease-fluid); }
+  .switch input:checked + .track{ background:var(--accent); }
+  .switch input:checked + .track + .thumb{ transform: translateX(16px); }
+  .switch input:focus-visible + .track{ outline:3px solid var(--accent); outline-offset:2px; }
+
+  /* =====================================================
+     PÁGINAS (roteamento tipo SPA)
+  ===================================================== */
+  .page{ animation: pageIn .5s var(--ease-fluid); }
+  .page[hidden]{ display:none; }
+  @keyframes pageIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+
+  /* =====================================================
+     HERO
+  ===================================================== */
+  .hero{ position:relative; background: radial-gradient(120% 140% at 50% 0%, #17181c 0%, var(--hero-bg) 62%);
+    color:var(--hero-ink); padding:76px 0 40px; border-radius:0 0 46px 46px; overflow:hidden; }
+  .hero-grid{ display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:40px; }
+  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr; text-align:center; } .hero-copy .btn-row{ justify-content:center; } }
+  .eyebrow-pill{ display:inline-flex; align-items:center; gap:8px; padding:7px 16px 7px 8px; border-radius:999px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); font-size:13px; color:var(--hero-soft); font-weight:500; margin-bottom:22px; }
+  .eyebrow-pill .dot{ width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#6f92ff,#3d6bff); }
+  .hero h1{ font-size:clamp(34px,5vw,58px); line-height:1.05; font-weight:800; max-width:620px; }
+  .hero h1 em{ font-style:normal; color:var(--hero-soft); }
+  .hero p.lead{ margin-top:18px; font-size:17px; line-height:1.6; color:var(--hero-soft); max-width:480px; }
+  @media (max-width:900px){ .hero p.lead{ margin-inline:auto; } }
+  .btn-row{ display:flex; gap:14px; margin-top:34px; flex-wrap:wrap; }
+  .hero-stats{ display:flex; gap:34px; margin-top:46px; flex-wrap:wrap; }
+  @media (max-width:900px){ .hero-stats{ justify-content:center; } }
+  .hero-stats .stat b{ display:block; font-family:'Manrope',sans-serif; font-size:26px; font-weight:800; }
+  .hero-stats .stat span{ font-size:13px; color:var(--hero-soft); }
+
+  /* =====================================================
+     TELEFONE 3D
+  ===================================================== */
+  .stage{ display:flex; align-items:center; justify-content:center; perspective:1700px; padding:30px 0; width:100%; }
+  .stage.intro-stage{ transform:scale(1.18); }
+  @media (max-width:480px){ .stage.intro-stage{ transform:scale(.92); } }
+  .phone3d{ position:relative; width:220px; height:452px; transform-style:preserve-3d; animation:spin 15s linear infinite;
+    filter: drop-shadow(0 40px 60px rgba(0,0,0,.55));
+    --back: linear-gradient(150deg,#c9c4ba 0%,#a8a196 45%,#948d80 100%);
+    --frame: repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 1px, transparent 1px 3px), linear-gradient(90deg,#55524b,#d8d3c8 45%,#b3ac9f 55%,#423f39);
+    --wall: radial-gradient(130% 110% at 30% 15%, #4c4a45, #171614 75%);
+  }
+  .stage.small .phone3d{ animation-duration:12s; }
+  .stage.big .phone3d{ animation-duration:16s; }
+  @keyframes spin{ from{ transform:rotateY(0deg);} to{ transform:rotateY(360deg);} }
+  .face{ position:absolute; border-radius:40px; }
+  .face.front, .face.back{ width:220px; height:452px; left:0; top:0; }
+  .face.left, .face.right{ width:14px; height:452px; left:103px; top:0; border-radius:6px; }
+  .face.top, .face.bottom{ width:220px; height:14px; left:0; top:219px; border-radius:6px; }
+  .face.front{ transform:translateZ(7px); background:#020203; overflow:hidden; border:2px solid #1c1c1e; }
+  .face.back{ transform:rotateY(180deg) translateZ(7px); background:var(--back); border:1px solid rgba(255,255,255,.1); overflow:hidden; }
+  .face.right{ transform:rotateY(90deg) translateZ(110px); }
+  .face.left{ transform:rotateY(-90deg) translateZ(110px); }
+  .face.top{ transform:rotateX(90deg) translateZ(226px); }
+  .face.bottom{ transform:rotateX(-90deg) translateZ(226px); }
+  .face.left, .face.right, .face.top, .face.bottom{ background:var(--frame); }
+  .screen{ position:relative; width:100%; height:100%; padding:16px 14px 18px; display:flex; flex-direction:column;
+    background: var(--wall), linear-gradient(180deg, rgba(0,0,0,.32) 0%, rgba(0,0,0,.02) 32%, rgba(0,0,0,.4) 100%);
+    background-blend-mode: overlay, normal; }
+  .island{ position:absolute; top:13px; left:50%; transform:translateX(-50%); width:84px; height:25px; background:#000; border-radius:20px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .status{ display:flex; justify-content:space-between; font-size:10px; color:rgba(255,255,255,.9); padding:2px 6px 0; }
+  .lock-time{ margin-top:58px; text-align:center; color:#fff; text-shadow:0 2px 18px rgba(0,0,0,.35); }
+  .lock-time .hh{ font-family:'Manrope',sans-serif; font-size:52px; font-weight:700; line-height:1; letter-spacing:-.01em; }
+  .lock-time .dd{ font-size:12.5px; margin-top:6px; opacity:.88; font-weight:500; }
+  .homebar{ margin-top:auto; margin-inline:auto; width:90px; height:4px; border-radius:4px; background:#fff; opacity:.55; }
+  .cam-module{ position:absolute; top:24px; left:22px; width:92px; height:92px; border-radius:28px;
+    background: linear-gradient(160deg, rgba(0,0,0,.32), rgba(0,0,0,.1)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .cam-module.c1{ width:50px; height:50px; }
+  .cam-module.c2{ width:66px; height:66px; }
+  .lens{ position:absolute; width:32px; height:32px; border-radius:50%;
+    background: radial-gradient(circle at 34% 30%, #99a6b5 0%, #2a2d33 55%, #0c0d10 100%);
+    box-shadow: inset 0 0 0 3px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); }
+  .lens.l1{ top:8px; left:8px; } .lens.l2{ top:8px; left:48px; } .lens.l3{ top:48px; left:8px; }
+  .cam-module.c2 .lens.l2{ top:8px; left:26px; }
+  .flash-dot{ position:absolute; top:54px; left:54px; width:16px; height:16px; border-radius:50%; background:#2a2b2e; box-shadow: inset 0 0 0 2px rgba(255,255,255,.08); }
+  .wordmark{ position:absolute; bottom:34px; left:0; right:0; text-align:center; font-family:'Manrope',sans-serif; font-size:11px; letter-spacing:.06em; color:rgba(255,255,255,.55); font-weight:600; }
+
+  /* =====================================================
+     SEÇÕES / CABEÇALHOS
+  ===================================================== */
+  .section{ padding:96px 0; }
+  .section-head{ max-width:640px; margin:0 auto 52px; text-align:center; }
+  .section-head .kicker{ color:var(--accent); font-weight:600; font-size:14px; }
+  .section-head h2{ font-size:clamp(28px,3.4vw,40px); margin-top:10px; font-weight:800; }
+  .section-head p{ margin-top:14px; color:var(--ink-soft); font-size:16px; line-height:1.6; }
+
+  /* =====================================================
+     FILTROS + GRID DE PRODUTOS
+  ===================================================== */
+  .chip-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:40px; }
+  .chip{ padding:9px 20px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+    font-size:13.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; transition: transform .25s var(--ease-fluid), background .2s; }
+  .chip:hover{ transform:translateY(-1px); }
+  .chip[aria-pressed="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+  .product-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:22px; }
+  .card{ position:relative; background:var(--surface); border:1px solid var(--line); border-radius:32px; padding:26px 22px 24px;
+    box-shadow:var(--card-shadow); display:flex; flex-direction:column; align-items:center; text-align:center;
+    cursor:pointer; transition: transform .35s var(--ease-fluid), box-shadow .35s var(--ease-fluid); width:100%; }
+  .card:hover{ transform:translateY(-6px); box-shadow:0 4px 8px rgba(20,20,25,.06), 0 24px 40px rgba(20,20,25,.12); }
+  .card .stage{ padding:6px 0 4px; transform:scale(.62); margin:-34px 0 -34px; }
+  .card .badge-new{ position:absolute; top:18px; left:18px; font-size:11px; font-weight:700; letter-spacing:.03em; color:var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); padding:4px 10px; border-radius:999px; }
+  .card h3{ font-size:19px; font-weight:700; margin-top:8px; }
+  .card .tag{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; }
+  .price-row{ display:flex; align-items:baseline; justify-content:center; gap:6px; margin-top:14px; width:100%; }
+  .price{ font-family:'Manrope',sans-serif; font-weight:800; font-size:22px; }
+  .price-old{ font-size:13px; color:var(--ink-soft); text-decoration:line-through; }
+  .swatches{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:16px; width:100%; flex-wrap:wrap; }
+  .swatch{ width:24px; height:24px; border-radius:50%; border:2px solid var(--bg); box-shadow:0 0 0 1px var(--line);
+    cursor:pointer; padding:0; appearance:none; transition: transform .2s var(--ease-fluid); }
+  .swatch:hover{ transform:translateY(-2px); }
+  .swatch[aria-pressed="true"]{ box-shadow:0 0 0 2px var(--accent); }
+  .color-name{ font-size:12px; color:var(--ink-soft); margin-top:8px; min-height:16px; text-align:center; width:100%; }
+  .scarcity{ font-size:11.5px; color:var(--danger); font-weight:600; margin-top:4px; min-height:14px; }
+  .rating{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; margin-top:14px; padding-top:12px; border-top:1px solid color-mix(in srgb, var(--line) 75%, transparent); width:100%; }
+  .stars{ display:flex; gap:4px; }
+  .star-btn{ background:none; border:none; padding:2px; cursor:pointer; line-height:0; }
+  .star-btn svg{ width:18px; height:18px; }
+  .star-btn .star-shape{ fill:none; stroke:var(--ink-soft); stroke-width:1.6; }
+  .star-btn.filled .star-shape{ fill:var(--star); stroke:var(--star); }
+  .rating.pp .star-btn svg{ width:24px; height:24px; }
+  .rating-meta{ font-size:12px; color:var(--ink-soft); }
+  .card .btn{ margin-top:18px; width:100%; }
+
+  /* comparador */
+  .compare-box{ margin-top:64px; background:var(--surface); border:1px solid var(--line); border-radius:32px; padding:32px; }
+  .compare-head{ text-align:center; margin-bottom:24px; }
+  .compare-controls{ display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center; max-width:640px; margin:0 auto; }
+  @media (max-width:640px){ .compare-controls{ grid-template-columns:1fr; } }
+  .compare-controls .vs{ font-weight:800; color:var(--ink-soft); text-align:center; }
+  select.field{ width:100%; padding:12px 16px; border-radius:16px; border:1px solid var(--line); background:var(--bg); font-size:14px; }
+  .compare-table{ width:100%; border-collapse:collapse; margin-top:28px; font-size:14px; }
+  .compare-table th, .compare-table td{ padding:14px 12px; border-bottom:1px solid var(--line); text-align:left; }
+  .compare-table th{ color:var(--ink-soft); font-weight:600; width:30%; }
+  .compare-table td.diff{ color:var(--accent); font-weight:700; }
+  .compare-table-wrap{ overflow-x:auto; }
+
+  /* =====================================================
+     FEATURES / BANNER
+  ===================================================== */
+  .feature-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media (max-width:980px){ .feature-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .feature-grid{ grid-template-columns:1fr; } }
+  .feature{ background:var(--bg-soft); border-radius:28px; padding:28px 24px; border:1px solid var(--line); text-align:center; }
+  .feature .icon{ width:46px; height:46px; border-radius:16px; background: color-mix(in srgb, var(--accent) 14%, transparent);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 18px; }
+  .feature h3{ font-size:16.5px; font-weight:700; }
+  .feature p{ margin-top:8px; font-size:14px; line-height:1.55; color:var(--ink-soft); }
+
+  .banner{ background: linear-gradient(120deg, #eef2ff, #f4f4f6); border-radius:40px; padding:56px;
+    display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:center; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .banner{ background: linear-gradient(120deg, #1a1d2b, #16171b); } }
+  :root[data-theme="dark"] .banner{ background: linear-gradient(120deg, #1a1d2b, #16171b); }
+  .banner-copy{ text-align:center; }
+  .banner h2{ font-size:clamp(24px,3vw,32px); font-weight:800; }
+  .banner p{ margin:12px auto 0; color:var(--ink-soft); font-size:15.5px; line-height:1.6; max-width:460px; }
+  .banner .btn{ margin-top:24px; }
+  @media (max-width:820px){ .banner{ grid-template-columns:1fr; padding:36px 26px; } }
+  .badge-stack{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .badge{ background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:16px 18px; min-width:120px; box-shadow:var(--card-shadow); text-align:center; }
+  .badge b{ display:block; font-family:'Manrope',sans-serif; font-size:20px; font-weight:800; }
+  .badge span{ font-size:12px; color:var(--ink-soft); }
+
+  /* =====================================================
+     SUPORTE — FAQ, rastreio, contato
+  ===================================================== */
+  .support-grid{ display:grid; grid-template-columns:1fr; gap:56px; }
+  .support-search{ position:relative; max-width:480px; margin:0 auto 32px; }
+  .support-search input{ width:100%; padding:14px 20px 14px 44px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:14.5px; }
+  .support-search svg{ position:absolute; left:16px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--ink-soft); }
+  .faq-category{ margin-bottom:10px; }
+  .faq-category > summary{ font-family:'Manrope',sans-serif; font-weight:700; font-size:17px; padding:14px 4px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); }
+  .faq-category > summary::-webkit-details-marker{ display:none; }
+  .faq-category > summary::after{ content:'+'; font-size:20px; color:var(--ink-soft); transition: transform .3s var(--ease-fluid); }
+  .faq-category[open] > summary::after{ transform: rotate(45deg); }
+  .faq-item{ border-bottom:1px solid var(--line); }
+  .faq-item summary{ padding:14px 4px 14px 18px; cursor:pointer; font-size:14.5px; font-weight:600; list-style:none; }
+  .faq-item summary::-webkit-details-marker{ display:none; }
+  .faq-item p{ padding:0 18px 16px; color:var(--ink-soft); font-size:14px; line-height:1.6; }
+  .faq-item[hidden], .faq-empty[hidden]{ display:none; }
+
+  .track-box, .contact-box{ background:var(--surface); border:1px solid var(--line); border-radius:28px; padding:32px; }
+  .track-form{ display:flex; gap:12px; flex-wrap:wrap; }
+  .track-form input{ flex:1; min-width:200px; padding:13px 18px; border-radius:999px; border:1px solid var(--line); background:var(--bg); font-size:14px; }
+  .timeline{ margin-top:32px; display:flex; flex-direction:column; gap:0; }
+  .timeline-step{ display:flex; gap:16px; padding-bottom:26px; position:relative; }
+  .timeline-step:last-child{ padding-bottom:0; }
+  .timeline-step::before{ content:''; position:absolute; left:11px; top:26px; bottom:0; width:2px; background:var(--line); }
+  .timeline-step:last-child::before{ display:none; }
+  .timeline-dot{ width:24px; height:24px; border-radius:50%; background:var(--bg-soft); border:2px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; z-index:1; }
+  .timeline-step.done .timeline-dot{ background:var(--accent); border-color:var(--accent); }
+  .timeline-step.done .timeline-dot::after{ content:'✓'; color:#fff; font-size:12px; font-weight:700; }
+  .timeline-title{ font-weight:700; font-size:14.5px; }
+  .timeline-date{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .field-group{ margin-bottom:18px; }
+  .field-group label{ display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  .field-group .field, .field-group select, .field-group input, .field-group textarea{ width:100%; padding:13px 16px; border-radius:14px; border:1px solid var(--line); background:var(--bg); font-size:14px; }
+  .field-group textarea{ min-height:110px; resize:vertical; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:560px){ .field-row{ grid-template-columns:1fr; } }
+  .file-drop{ border:1.5px dashed var(--line); border-radius:14px; padding:20px; text-align:center; font-size:13.5px; color:var(--ink-soft); cursor:pointer; }
+  .file-drop:hover{ background:var(--bg-soft); }
+  .form-success{ display:none; background: color-mix(in srgb, var(--accent) 10%, transparent); border:1px solid var(--accent); border-radius:16px; padding:18px 20px; font-size:14px; margin-top:18px; }
+  .form-success.show{ display:block; }
+
+  /* =====================================================
+     FOOTER + WHATSAPP FLUTUANTE
+  ===================================================== */
+  footer{ background:var(--hero-bg); color:var(--hero-soft); border-radius:46px 46px 0 0; margin-top:20px;
+    padding:64px 0 calc(30px + env(safe-area-inset-bottom,0px)); }
+  .footer-grid{ display:grid; grid-template-columns: 1.4fr repeat(3,1fr); gap:30px; text-align:left; }
+  @media (max-width:780px){ .footer-grid{ grid-template-columns:1fr 1fr; text-align:center; } }
+  .footer-grid h4{ color:var(--hero-ink); font-size:13.5px; font-weight:700; margin-bottom:14px; }
+  .footer-grid a{ display:block; font-size:13.5px; padding:5px 0; color:var(--hero-soft); transition:color .2s; }
+  .footer-grid a:hover{ color:var(--hero-ink); }
+  .footer-grid button.link-btn{ display:block; background:none; border:none; padding:5px 0; font-size:13.5px; color:var(--hero-soft); cursor:pointer; text-align:inherit; }
+  .footer-grid button.link-btn:hover{ color:var(--hero-ink); }
+  .footer-logo{ font-family:'Manrope',sans-serif; font-weight:800; font-size:20px; color:var(--hero-ink); }
+  .footer-bottom{ margin-top:46px; padding-top:22px; border-top:1px solid rgba(255,255,255,.1);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:12.5px; text-align:center; }
+
+  .wa-float{ position:fixed; right:22px; bottom:calc(22px + env(safe-area-inset-bottom,0px)); z-index:150;
+    width:58px; height:58px; border-radius:50%; border:1px solid rgba(255,255,255,.25);
+    background: rgba(20,150,90,.85); backdrop-filter: blur(10px); box-shadow:0 12px 28px rgba(0,0,0,.28);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; transition: transform .3s var(--ease-fluid); }
+  .wa-float:hover{ transform:translateY(-3px) scale(1.04); }
+  .wa-float svg{ width:28px; height:28px; }
+
+  /* =====================================================
+     PÁGINA DE PRODUTO
+  ===================================================== */
+  .product-page{ position:fixed; inset:0; z-index:200; background:var(--bg); overflow-y:auto;
+    transform:translateY(18px); opacity:0; pointer-events:none; transition: opacity .4s var(--ease-fluid), transform .4s var(--ease-fluid); }
+  .product-page.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .pp-top{ position:sticky; top:0; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--line); padding:16px 28px; display:flex; align-items:center; gap:14px; z-index:2; }
+  .pp-back{ display:inline-flex; align-items:center; gap:6px; background:none; border:none; cursor:pointer; font-weight:600; font-size:14px; color:var(--ink); padding:8px 4px; }
+  .pp-body{ max-width:1000px; margin:0 auto; padding:48px 28px 110px; display:grid; grid-template-columns:1fr 1fr; gap:56px; align-items:start; }
+  @media (max-width:860px){ .pp-body{ grid-template-columns:1fr; text-align:center; } }
+  .pp-media{ display:flex; flex-direction:column; align-items:center; position:sticky; top:96px; }
+  @media (max-width:860px){ .pp-media{ position:static; } }
+  .pp-media .stage{ padding:0; }
+  .pp-kicker{ color:var(--accent); font-weight:600; font-size:13px; }
+  .pp-name{ font-size:clamp(26px,3.4vw,36px); font-weight:800; margin-top:8px; }
+  .pp-tag{ margin-top:8px; color:var(--ink-soft); font-size:15px; }
+  .pp-price-row{ display:flex; align-items:baseline; gap:8px; margin-top:18px; justify-content:flex-start; }
+  @media (max-width:860px){ .pp-price-row{ justify-content:center; } }
+  .pp-price{ font-family:'Manrope',sans-serif; font-weight:800; font-size:28px; }
+  .pp-actions{ display:flex; gap:12px; margin-top:26px; flex-wrap:wrap; }
+  @media (max-width:860px){ .pp-actions{ justify-content:center; } }
+  .pp-specs{ margin-top:40px; border-top:1px solid var(--line); padding-top:8px; }
+  .spec-row{ display:flex; justify-content:space-between; gap:14px; font-size:14px; padding:12px 0; border-bottom:1px solid var(--line); text-align:left; }
+  .spec-row span:first-child{ color:var(--ink-soft); flex-shrink:0; }
+  .spec-row span:last-child{ font-weight:600; text-align:right; }
+  .pp-access{ margin-top:28px; background:var(--bg-soft); border-radius:24px; padding:22px 24px; text-align:left; }
+  .pp-access h4{ font-size:14.5px; font-weight:700; margin-bottom:10px; }
+  .pp-access ul{ margin:0; padding-left:2px; font-size:13.5px; color:var(--ink-soft); line-height:1.9; }
+  .pp-access li{ padding-left:22px; position:relative; }
+  .pp-access li::before{ content:'✓'; position:absolute; left:0; color:var(--accent); font-weight:700; }
+  .pp-swatch-block{ margin-top:22px; text-align:left; }
+  @media (max-width:860px){ .pp-swatch-block{ text-align:center; } }
+  .pp-swatch-block .swatches{ justify-content:flex-start; }
+  @media (max-width:860px){ .pp-swatch-block .swatches{ justify-content:center; } }
+  .pp-scarcity{ font-size:12.5px; color:var(--danger); font-weight:600; margin-top:8px; }
+
+  /* reviews analíticos */
+  .pp-reviews{ margin-top:44px; border-top:1px solid var(--line); padding-top:28px; text-align:left; }
+  .reviews-summary{ display:flex; gap:28px; flex-wrap:wrap; align-items:center; margin-bottom:24px; }
+  .reviews-avg{ text-align:center; }
+  .reviews-avg .num{ font-family:'Manrope',sans-serif; font-size:40px; font-weight:800; line-height:1; }
+  .reviews-sub{ display:flex; gap:22px; flex-wrap:wrap; }
+  .reviews-sub div{ font-size:12.5px; color:var(--ink-soft); }
+  .reviews-sub b{ display:block; color:var(--ink); font-size:14px; }
+  .review-card{ border:1px solid var(--line); border-radius:20px; padding:18px 20px; margin-bottom:14px; }
+  .review-top{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .verified{ display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#1a8a4a; background:rgba(26,138,74,.1); padding:3px 9px; border-radius:999px; }
+  .review-date{ font-size:12px; color:var(--ink-soft); }
+  .review-subscores{ display:flex; gap:14px; font-size:12px; color:var(--ink-soft); margin:6px 0; }
+  .review-text{ font-size:14px; line-height:1.6; }
+  .review-empty{ font-size:14px; color:var(--ink-soft); padding:12px 0; }
+
+  .review-form{ margin-top:20px; border:1px solid var(--line); border-radius:20px; padding:20px 22px; }
+  .review-form[hidden]{ display:none; }
+  .review-form h4{ font-size:15px; font-weight:700; margin-bottom:14px; }
+  .picker-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .picker-row .stars svg{ width:22px; height:22px; }
+
+  /* =====================================================
+     TILT 3D + BOTÃO MAGNÉTICO (respeitam reduce-motion)
+  ===================================================== */
+  .tilt-wrap{ transform-style:preserve-3d; transition: transform .5s var(--ease-fluid); }
+  html.reduce-motion .tilt-wrap{ transform:none !important; transition:none !important; }
+  html.reduce-motion .phone3d{ animation:none !important; }
+  /* =====================================================
+     CONTROLES MAGNÉTICOS + ASPECTO 3D
+     Aplicado a todos os botões e CTAs, sem alterar suas ações.
+  ===================================================== */
+  .magnetic-control{
+    position:relative;
+    transform-style:preserve-3d;
+    perspective:900px;
+    will-change:transform;
+    transition:transform .28s var(--ease-fluid), box-shadow .28s var(--ease-fluid), filter .28s var(--ease-fluid);
+  }
+  .magnetic-control::after{
+    content:'';
+    position:absolute;
+    inset:1px;
+    border-radius:inherit;
+    pointer-events:none;
+    background:linear-gradient(125deg, rgba(255,255,255,.24), transparent 32%, transparent 68%, rgba(255,255,255,.08));
+    opacity:.5;
+    transform:translateZ(1px);
+    transition:opacity .25s ease;
+  }
+  .magnetic-control:hover{
+    filter:saturate(1.06) brightness(1.02);
+    box-shadow:0 12px 24px rgba(20,20,25,.16), 0 4px 0 rgba(20,20,25,.10), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .magnetic-control:not(.star-btn):not(.swatch):not(.chip){
+    box-shadow:0 4px 0 rgba(20,20,25,.10), inset 0 1px 0 rgba(255,255,255,.20);
+  }
+  .magnetic-control:not(.star-btn):not(.swatch):not(.chip):active{ box-shadow:0 1px 0 rgba(20,20,25,.10), inset 0 1px 0 rgba(255,255,255,.16); }
+  .magnetic-control.pressed{ filter:brightness(.98); transition-duration:.08s; transform:scale(.95) !important; }
+  .btn-magnetic{ will-change:transform; }
+  html.reduce-motion .magnetic-control{ transform:none !important; transition:none !important; }
+  html.reduce-motion .magnetic-control::after{ transition:none !important; }
+
+  /* Avaliação da loja na home */
+  .store-rating-widget{ margin-top:22px; max-width:390px; }
+  .store-rating-line{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .store-rating-stars{ display:flex; gap:3px; }
+  .store-rating-stars .star-btn{ pointer-events:none; }
+  .store-rating-value{ font-family:'Manrope',sans-serif; font-size:15px; font-weight:800; }
+  .store-rating-count{ font-size:12px; color:var(--hero-soft); }
+  .store-review-toggle{ margin-top:10px; padding:0; border:0; background:none; color:var(--hero-ink); font-size:12px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+  .store-review-form{ margin-top:12px; padding:16px; border:1px solid rgba(255,255,255,.14); border-radius:18px; background:rgba(255,255,255,.055); backdrop-filter:blur(10px); }
+  .store-review-form[hidden]{ display:none; }
+  .store-review-form .store-pick{ display:flex; gap:3px; margin-bottom:10px; }
+  .store-review-form textarea{ width:100%; min-height:76px; resize:vertical; padding:11px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.16); color:#fff; outline:none; }
+  .store-review-form textarea::placeholder{ color:rgba(255,255,255,.5); }
+  .store-review-form .btn{ margin-top:10px; }
+
+  /* =====================================================
+     ASSISTENTE DE ESCOLHA (guided selling)
+  ===================================================== */
+  .quiz-cta{ max-width:640px; margin:0 auto 48px; background: linear-gradient(120deg, color-mix(in srgb, var(--accent) 10%, transparent), var(--bg-soft));
+    border:1px solid var(--line); border-radius:28px; padding:26px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; text-align:left; }
+  .quiz-cta h3{ font-size:16.5px; font-weight:800; }
+  .quiz-cta p{ font-size:13.5px; color:var(--ink-soft); margin-top:4px; }
+  .quiz-modal{ position:fixed; inset:0; z-index:300; background:rgba(10,10,12,.55); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .35s var(--ease-fluid); }
+  .quiz-modal.open{ opacity:1; pointer-events:auto; }
+  .quiz-panel{ background:var(--surface); border-radius:28px; padding:34px; max-width:460px; width:100%; box-shadow:var(--card-shadow); position:relative; }
+  .quiz-close{ position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; font-size:18px; color:var(--ink-soft); padding:6px; }
+  .quiz-progress{ display:flex; gap:6px; margin-bottom:22px; }
+  .quiz-progress span{ flex:1; height:4px; border-radius:4px; background:var(--line); }
+  .quiz-progress span.done{ background:var(--accent); }
+  .quiz-q{ font-size:18px; font-weight:800; margin-bottom:18px; }
+  .quiz-opt{ display:block; width:100%; text-align:left; padding:14px 18px; border-radius:16px; border:1px solid var(--line);
+    background:var(--bg); margin-bottom:10px; cursor:pointer; font-size:14px; font-weight:600; transition: border-color .2s, background .2s; }
+  .quiz-opt:hover{ border-color:var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+  .quiz-result{ text-align:center; }
+  .quiz-result .stage{ padding:0 0 12px; }
+
+  /* =====================================================
+     CONFIGURADOR — armazenamento
+  ===================================================== */
+  .storage-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  @media (max-width:860px){ .storage-row{ justify-content:center; } }
+  .storage-pill{ padding:9px 16px; border-radius:12px; border:1px solid var(--line); background:var(--bg); font-size:13px; font-weight:700; cursor:pointer; }
+  .storage-pill[aria-pressed="true"]{ border-color:var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color:var(--accent); }
+
+  /* =====================================================
+     COMPARADOR — até 3 colunas + destaque de vantagem
+  ===================================================== */
+  .compare-controls-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:760px; margin:0 auto; }
+  @media (max-width:720px){ .compare-controls-3{ grid-template-columns:1fr; } }
+  .compare-table td.win{ position:relative; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 7%, transparent); border-radius:8px; }
+
+  /* =====================================================
+     CENTRO DE GARANTIA — gauge radial
+  ===================================================== */
+  .warranty-form{ display:flex; gap:12px; flex-wrap:wrap; }
+  .warranty-form input{ flex:1; min-width:200px; padding:13px 18px; border-radius:999px; border:1px solid var(--line); background:var(--bg); font-size:14px; }
+  .warranty-result{ margin-top:28px; display:flex; gap:28px; flex-wrap:wrap; align-items:center; }
+  .gauge{ width:120px; height:120px; flex-shrink:0; }
+  .gauge circle{ fill:none; stroke-width:10; }
+  .gauge .track{ stroke:var(--line); }
+  .gauge .value{ stroke:var(--accent); stroke-linecap:round; transform:rotate(-90deg); transform-origin:60px 60px; transition: stroke-dashoffset 1s var(--ease-fluid); }
+  .gauge-label{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:-84px; font-weight:700; }
+  .warranty-meta{ display:flex; flex-direction:column; gap:6px; font-size:14px; }
+  .warranty-status{ font-weight:800; font-size:16px; }
+  .warranty-status.ok{ color:#1a8a4a; }
+  .warranty-status.expired{ color:var(--danger); }
+
+  /* =====================================================
+     CHECKOUT SIMULADO
+  ===================================================== */
+  .checkout-modal{ position:fixed; inset:0; z-index:300; background:rgba(10,10,12,.55); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity .35s var(--ease-fluid); }
+  .checkout-modal.open{ opacity:1; pointer-events:auto; }
+  .checkout-panel{ background:var(--surface); border-radius:28px; padding:34px; max-width:440px; width:100%; box-shadow:var(--card-shadow); position:relative; }
+  .checkout-close{ position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer; font-size:18px; color:var(--ink-soft); padding:6px; }
+  .checkout-steps{ display:flex; gap:6px; margin-bottom:22px; }
+  .checkout-steps span{ flex:1; height:4px; border-radius:4px; background:var(--line); }
+  .checkout-steps span.done{ background:var(--accent); }
+  .ship-opt{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-radius:16px; border:1px solid var(--line); margin-bottom:10px; cursor:pointer; }
+  .ship-opt[aria-pressed="true"]{ border-color:var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .checkout-success{ text-align:center; padding:12px 0; }
+  .checkout-success .check{ width:56px; height:56px; border-radius:50%; background: color-mix(in srgb, var(--accent) 15%, transparent); display:flex; align-items:center; justify-content:center; margin:0 auto 16px; color:var(--accent); }
+
+  /* Container query: densidade do card em grades estreitas */
+  .product-grid{ container-type: inline-size; }
+  @container (max-width: 260px){ .card{ padding:20px 16px 18px; } .card h3{ font-size:17px; } }
+
+  /* helpful / ordenação de reviews */
+  .reviews-toolbar{ display:flex; gap:8px; margin-bottom:14px; }
+  .sort-btn{ padding:6px 14px; border-radius:999px; border:1px solid var(--line); background:var(--bg); font-size:12.5px; font-weight:600; cursor:pointer; }
+  .sort-btn[aria-pressed="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .helpful-btn{ margin-top:8px; font-size:12px; font-weight:700; color:var(--ink-soft); background:none; border:1px solid var(--line); border-radius:999px; padding:5px 12px; cursor:pointer; }
+  .helpful-btn:hover{ border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body class="locked">
+
+  <a class="skip-link" href="#main">Pular para o conteúdo</a>
+  <div id="liveRegion" class="sr-only" aria-live="polite" role="status"></div>
+
+  <!-- ============ TELA DE ENTRADA ============ -->
+  <div class="intro" id="intro">
+    <div class="intro-particles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="stage intro-stage">
+      <div class="phone3d" style="--back:linear-gradient(150deg,#dfe3ea,#aab2bd 55%,#7d8794); --frame:repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 1px, transparent 1px 3px), linear-gradient(90deg,#4a4b50,#e3e6ea 45%,#9aa1aa 55%,#3a3b3f); --wall: radial-gradient(130% 110% at 30% 15%, #3d4552, #101216 75%);">
+        <div class="face front"><div class="screen"><div class="island"></div>
+          <div class="status"><span>9:41</span><span>••• 5G 100%</span></div>
+          <div class="lock-time"><div class="hh">9:41</div><div class="dd">domingo, 20 de setembro</div></div>
+          <div class="homebar"></div></div></div>
+        <div class="face back"><div class="cam-module"><div class="lens l1"></div><div class="lens l2"></div><div class="lens l3"></div><div class="flash-dot"></div></div>
+          <div class="wordmark">LUMEN STORE</div></div>
+        <div class="face left"></div><div class="face right"></div><div class="face top"></div><div class="face bottom"></div>
+      </div>
+    </div>
+    <button class="intro-logo" id="enterBtn" aria-label="Toque no logo para entrar na loja LUMEN">LUMEN<span>.</span></button>
+    <div class="intro-caption"><p class="tiny">Toque no logo para abrir a loja</p></div>
+  </div>
+
+  <header class="nav">
+    <div class="wrap nav-row">
+      <button class="logo" id="navLogo" aria-label="Ir para a página inicial">LUMEN<span>.</span></button>
+      <nav class="links" aria-label="Navegação principal">
+        <a href="#home" data-route="home">Home</a>
+        <a href="#produtos" data-route="produtos">Produtos</a>
+        <a href="#suporte" data-route="suporte">Suporte</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="a11y-btn" id="a11yBtn" aria-haspopup="true" aria-expanded="false" aria-controls="a11yPanel">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Acessibilidade
+        </button>
+      </div>
+    </div>
+    <div class="a11y-panel" id="a11yPanel" hidden role="menu" aria-label="Preferências de acessibilidade">
+      <h4>Preferências</h4>
+      <div class="a11y-row">
+        <label for="reduceMotionToggle">Reduzir movimento</label>
+        <span class="switch"><input type="checkbox" id="reduceMotionToggle"><span class="track"></span><span class="thumb"></span></span>
+      </div>
+      <div class="a11y-row">
+        <label for="highContrastToggle">Alto contraste</label>
+        <span class="switch"><input type="checkbox" id="highContrastToggle"><span class="track"></span><span class="thumb"></span></span>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+  <!-- ============ PÁGINA: HOME ============ -->
+  <section class="page" data-page="home" id="page-home" aria-labelledby="homeTitle">
+    <div class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow-pill"><span class="dot"></span> Revenda autorizada · retirada no mesmo dia</div>
+          <h1 id="homeTitle">Descubra a perfeição.<br><em>A precisão em suas mãos.</em></h1>
+          <p class="lead">Da primeira geração à mais recente: performance inigualável, garantia estendida e uma curadoria feita para quem exige o essencial, sem excessos.</p>
+          <div class="btn-row">
+            <a href="#produtos" class="btn btn-primary">Explorar a coleção</a>
+            <a href="#suporte" class="btn btn-ghost">Falar com um especialista</a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat" id="storeRatingWidget">
+              <div class="store-rating-line">
+                <div class="store-rating-stars" id="storeRatingStars" aria-label="Avaliação da loja"></div>
+                <span class="store-rating-value" id="storeRatingValue">—</span>
+                <span class="store-rating-count" id="storeRatingCount">Ainda sem avaliações</span>
+              </div>
+              <button type="button" class="store-review-toggle" id="storeReviewToggle">Avaliar a loja</button>
+              <form class="store-review-form" id="storeReviewForm" hidden>
+                <div class="store-pick" id="storeReviewPicker" aria-label="Sua nota para a loja"></div>
+                <textarea id="storeReviewText" placeholder="Conte como foi sua experiência com a LUMEN..." required></textarea>
+                <button type="submit" class="btn btn-primary btn-sm">Publicar avaliação</button>
+              </form>
+            </div>
+            <div class="stat"><b>33</b><span>modelos em catálogo</span></div>
+            <div class="stat"><b>12x</b><span>sem juros no cartão</span></div>
+          </div>
+        </div>
+        <div class="stage big">
+          <div class="phone3d" style="--back:linear-gradient(150deg,#dfe3ea,#aab2bd 55%,#7d8794); --frame:repeating-linear-gradient(90deg, rgba(255,255,255,.18) 0 1px, transparent 1px 3px), linear-gradient(90deg,#4a4b50,#e3e6ea 45%,#9aa1aa 55%,#3a3b3f); --wall: radial-gradient(130% 110% at 30% 15%, #3d4552, #101216 75%);">
+            <div class="face front"><div class="screen"><div class="island"></div>
+              <div class="status"><span>9:41</span><span>••• 5G 100%</span></div>
+              <div class="lock-time"><div class="hh">9:41</div><div class="dd">domingo, 20 de setembro</div></div>
+              <div class="homebar"></div></div></div>
+            <div class="face back"><div class="cam-module"><div class="lens l1"></div><div class="lens l2"></div><div class="lens l3"></div><div class="flash-dot"></div></div>
+              <div class="wordmark">LUMEN STORE</div></div>
+            <div class="face left"></div><div class="face right"></div><div class="face top"></div><div class="face bottom"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="vantagens" style="background:var(--bg-soft); border-radius:46px; margin:0 28px;">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Excelência, ponto a ponto</div>
+          <h2>O cuidado que a precisão exige</h2>
+        </div>
+        <div class="feature-grid">
+          <div class="feature"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 5-3.2 8.4-7 10-3.8-1.6-7-5-7-10V6l7-3z" stroke="#3d6bff" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+            <h3>Garantia oficial</h3><p>1 ano de garantia Apple mais 6 meses de cobertura da loja, sem custo extra.</p></div>
+          <div class="feature"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 12h11M15 12l5 0M15 7l5 5-5 5" stroke="#3d6bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Entrega expressa</h3><p>Capitais em até 24h e retirada na loja em 30 minutos após a compra.</p></div>
+          <div class="feature"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M7 7h13M7 7l3-3M7 7l3 3M17 17H4M17 17l-3-3M17 17l-3 3" stroke="#3d6bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Troca facilitada</h3><p>Aceitamos seu aparelho atual como parte do pagamento, com avaliação na hora.</p></div>
+          <div class="feature"><div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.2" stroke="#3d6bff" stroke-width="1.8"/><path d="M12 8v4l2.6 2.6" stroke="#3d6bff" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            <h3>Suporte especializado</h3><p>Time treinado para configurar, migrar dados e tirar dúvidas por até 90 dias.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="troca">
+      <div class="wrap">
+        <div class="banner">
+          <div class="banner-copy">
+            <h2>Seu iPhone atual vale mais do que você imagina</h2>
+            <p>Avaliamos o aparelho em loja, na hora, e abatemos o valor direto no novo. Sem burocracia, sem espera de laudo.</p>
+            <a href="#suporte" class="btn btn-outline">Simular avaliação</a>
+          </div>
+          <div class="badge-stack">
+            <div class="badge"><b>Até R$ 3.200</b><span>de bônus na troca</span></div>
+            <div class="badge"><b>5 min</b><span>avaliação em loja</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PÁGINA: PRODUTOS ============ -->
+  <section class="page" data-page="produtos" id="page-produtos" hidden aria-labelledby="prodTitle">
+    <div class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Linha completa</div>
+          <h2 id="prodTitle">Performance inigualável, em cada geração</h2>
+          <p>Do iPhone XR ao mais recente iPhone 18. Selecione um modelo para ver ficha técnica, acessibilidade e avaliações reais de clientes.</p>
+        </div>
+        <div class="quiz-cta">
+          <div><h3>Não sabe qual escolher?</h3><p>Responda 3 perguntas rápidas e receba a recomendação ideal para o seu perfil.</p></div>
+          <button class="btn btn-primary btn-magnetic" id="quizOpenBtn">Assistente de escolha</button>
+        </div>
+
+        <div class="chip-row" id="chipRow" role="group" aria-label="Filtrar por geração"></div>
+        <div class="product-grid" id="productGrid"></div>
+
+        <div class="compare-box" aria-labelledby="compareTitle">
+          <div class="compare-head">
+            <h3 id="compareTitle" style="font-size:22px; font-weight:800;">Comparativo lado a lado</h3>
+            <p style="color:var(--ink-soft); font-size:14.5px; margin-top:8px;">Escolha até três modelos — quem vence em cada especificação recebe um destaque sutil.</p>
+          </div>
+          <div class="compare-controls-3">
+            <div><label for="compareA" class="sr-only">Primeiro modelo</label><select id="compareA" class="field"></select></div>
+            <div><label for="compareB" class="sr-only">Segundo modelo</label><select id="compareB" class="field"></select></div>
+            <div><label for="compareC" class="sr-only">Terceiro modelo (opcional)</label><select id="compareC" class="field"><option value="">— nenhum —</option></select></div>
+          </div>
+          <div class="compare-table-wrap">
+            <table class="compare-table" id="compareTable" aria-live="polite"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PÁGINA: SUPORTE ============ -->
+  <section class="page" data-page="suporte" id="page-suporte" hidden aria-labelledby="supTitle">
+    <div class="section">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="kicker">Central de ajuda</div>
+          <h2 id="supTitle">Sucesso do cliente, do primeiro contato ao pós-venda</h2>
+          <p>Autoatendimento inteligente, rastreio em tempo real e um time consultivo pronto para casos específicos.</p>
+        </div>
+
+        <div class="support-grid">
+          <!-- FAQ -->
+          <article aria-labelledby="faqTitle">
+            <h3 id="faqTitle" style="font-size:22px; font-weight:800; text-align:center; margin-bottom:20px;">Perguntas frequentes</h3>
+            <div class="support-search">
+              <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <label for="faqSearch" class="sr-only">Buscar nas perguntas frequentes</label>
+              <input type="search" id="faqSearch" placeholder="Buscar dúvida, ex: garantia, troca, entrega...">
+            </div>
+            <div id="faqList"></div>
+            <p class="faq-empty" id="faqEmpty" hidden style="text-align:center; color:var(--ink-soft); padding:24px 0;">Nenhum resultado encontrado. Tente outro termo ou fale com o suporte consultivo abaixo.</p>
+          </article>
+
+          <!-- Rastreio -->
+          <article aria-labelledby="trackTitle">
+            <h3 id="trackTitle" style="font-size:22px; font-weight:800; text-align:center; margin-bottom:20px;">Rastreio inteligente</h3>
+            <div class="track-box">
+              <form class="track-form" id="trackForm">
+                <label for="trackInput" class="sr-only">Número do pedido</label>
+                <input type="text" id="trackInput" placeholder="Digite o número do seu pedido (ex: LM-48213)" required>
+                <button type="submit" class="btn btn-primary">Rastrear</button>
+              </form>
+              <div id="trackResult" aria-live="polite"></div>
+            </div>
+          </article>
+
+          <!-- Centro de Garantia -->
+          <article aria-labelledby="warrantyTitle">
+            <h3 id="warrantyTitle" style="font-size:22px; font-weight:800; text-align:center; margin-bottom:20px;">Centro de garantia</h3>
+            <div class="track-box">
+              <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:14px;">Simulação demonstrativa — insira qualquer número de série fictício para ver o formato do relatório.</p>
+              <form class="warranty-form" id="warrantyForm">
+                <label for="warrantyInput" class="sr-only">Número de série</label>
+                <input type="text" id="warrantyInput" placeholder="Número de série (ex: F2LN9X8KQP)" required>
+                <button type="submit" class="btn btn-primary">Verificar</button>
+              </form>
+              <div id="warrantyResult" aria-live="polite"></div>
+            </div>
+          </article>
+
+          <!-- Contato consultivo -->
+          <article aria-labelledby="contactTitle">
+            <h3 id="contactTitle" style="font-size:22px; font-weight:800; text-align:center; margin-bottom:20px;">Suporte consultivo</h3>
+            <div class="contact-box">
+              <form id="contactForm" novalidate>
+                <div class="field-row">
+                  <div class="field-group">
+                    <label for="cName">Nome completo</label>
+                    <input class="field" type="text" id="cName" required>
+                  </div>
+                  <div class="field-group">
+                    <label for="cEmail">E-mail</label>
+                    <input class="field" type="email" id="cEmail" required>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-group">
+                    <label for="cMotivo">Motivo do contato</label>
+                    <select class="field" id="cMotivo">
+                      <option>Dúvida sobre produto</option>
+                      <option>Troca / avaliação de aparelho</option>
+                      <option>Garantia e assistência</option>
+                      <option>Financiamento</option>
+                      <option>Outro assunto</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label for="cUrgencia">Urgência</label>
+                    <select class="field" id="cUrgencia">
+                      <option value="baixa">Baixa — posso aguardar</option>
+                      <option value="media" selected>Média — em até 24h</option>
+                      <option value="alta">Alta — preciso de resposta hoje</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="cMsg">Mensagem</label>
+                  <textarea id="cMsg" required placeholder="Conte com detalhes o que você precisa..."></textarea>
+                </div>
+                <div class="field-group">
+                  <label for="cFile">Anexo (opcional)</label>
+                  <div class="file-drop" id="fileDrop">
+                    <input type="file" id="cFile" class="sr-only">
+                    <span id="fileLabel">Clique para anexar um arquivo (nota fiscal, foto do aparelho...)</span>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Enviar mensagem</button>
+                <div class="form-success" id="contactSuccess" role="status"></div>
+              </form>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer id="footer-info">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div><div class="footer-logo">LUMEN.</div>
+          <p style="margin-top:12px; font-size:13.5px; max-width:220px;">Revenda autorizada especializada em iPhone, com loja física e suporte pós-venda dedicado.</p>
+        </div>
+        <div><h4>Loja</h4>
+          <button class="link-btn" data-route="produtos">Produtos</button>
+          <a href="#vantagens">Vantagens</a>
+          <a href="#troca">Troca de aparelho</a>
+        </div>
+        <div><h4>Suporte</h4>
+          <button class="link-btn" data-route="suporte">Central de ajuda</button>
+          <button class="link-btn" data-route="suporte">Rastrear pedido</button>
+          <button class="link-btn" data-route="suporte">Falar com a loja</button>
+        </div>
+        <div><h4>Contato</h4><a href="#" id="footerWaLink">WhatsApp</a><a href="#">Unidades</a><a href="#">Trabalhe conosco</a></div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 LUMEN Store. Loja fictícia criada para fins de demonstração.</span>
+        <span>iPhone é marca registrada da Apple Inc.</span>
+      </div>
+    </div>
+  </footer>
+
+  <button class="wa-float" id="waFloat" aria-label="Falar com a LUMEN no WhatsApp">
+    <svg viewBox="0 0 32 32" fill="#fff"><path d="M16 3C9 3 3.3 8.6 3.3 15.5c0 2.5.7 4.8 1.9 6.8L3 29l6.9-2.1c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.6 12.7-12.5S23 3 16 3zm0 22.7c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-4.1 1.2 1.2-4-.2-.4c-1-1.6-1.6-3.5-1.6-5.4 0-5.7 4.7-10.3 10.4-10.3s10.4 4.6 10.4 10.3S21.7 25.7 16 25.7zm5.7-7.7c-.3-.2-1.8-.9-2.1-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.5-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.7-1.7-1-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1.1 2.8 1.2 3c.1.2 2.1 3.2 5.1 4.4.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.1-.3-.2-.6-.3z"/></svg>
+  </button>
+
+  <!-- ============ PÁGINA DE PRODUTO ============ -->
+  <div class="product-page" id="productPage" role="dialog" aria-modal="true" aria-labelledby="ppName">
+    <div class="pp-top">
+      <button class="pp-back" id="ppBack" aria-label="Voltar à loja">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Voltar à loja
+      </button>
+    </div>
+    <div class="pp-body">
+      <div class="pp-media"><div class="stage big" id="ppStage"></div></div>
+      <div class="pp-info">
+        <div class="pp-kicker" id="ppKicker">Modelo</div>
+        <h1 class="pp-name" id="ppName">iPhone</h1>
+        <p class="pp-tag" id="ppTag">—</p>
+        <div class="pp-price-row"><span class="pp-price" id="ppPrice">R$ 0</span><span class="price-old" id="ppPriceOld"></span></div>
+
+        <div class="pp-swatch-block">
+          <div class="swatches" id="ppSwatches"></div>
+          <div class="color-name" id="ppColorName" style="text-align:left"></div>
+          <div class="pp-scarcity" id="ppScarcity"></div>
+          <label class="sr-only" for="ppStorageRow">Armazenamento</label>
+          <div class="storage-row" id="ppStorageRow"></div>
+        </div>
+
+        <div class="pp-actions">
+          <button class="btn btn-primary btn-magnetic" id="ppBuyBtn">Adquirir agora</button>
+          <a href="#troca" class="btn btn-outline" id="ppTrocaLink">Usar meu iPhone na troca</a>
+        </div>
+
+        <div class="pp-specs" id="ppSpecs"></div>
+
+        <div class="pp-access">
+          <h4>Acessibilidade</h4>
+          <ul>
+            <li>VoiceOver — leitor de tela integrado ao iOS</li>
+            <li>Controle por Voz e Controle de Acesso</li>
+            <li>Legendas ao Vivo e Áudio Mono</li>
+            <li>Texto Dinâmico e Lupa embutida</li>
+          </ul>
+        </div>
+
+        <div class="pp-reviews" id="ppReviews">
+          <h3 style="font-size:19px; font-weight:800; margin-bottom:18px;">Avaliações de clientes</h3>
+          <div id="reviewsSummary"></div>
+          <div class="reviews-toolbar" id="reviewsToolbar" role="group" aria-label="Ordenar avaliações">
+            <button class="sort-btn" data-sort="recent" aria-pressed="true">Mais recentes</button>
+            <button class="sort-btn" data-sort="helpful" aria-pressed="false">Mais úteis</button>
+          </div>
+          <div id="reviewsList"></div>
+          <button class="btn btn-outline btn-sm btn-magnetic" id="toggleReviewForm" style="margin-top:8px;">Escrever avaliação</button>
+          <form class="review-form" id="reviewForm" hidden>
+            <h4>Sua avaliação</h4>
+            <div class="picker-row"><span>Nota geral</span><div class="stars" id="pickGeral"></div></div>
+            <div class="picker-row"><span>Bateria</span><div class="stars" id="pickBateria"></div></div>
+            <div class="picker-row"><span>Câmera</span><div class="stars" id="pickCamera"></div></div>
+            <div class="field-group">
+              <label for="reviewText" class="sr-only">Comentário</label>
+              <textarea id="reviewText" placeholder="Conte sua experiência com este modelo..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Publicar avaliação</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ASSISTENTE DE ESCOLHA ============ -->
+  <div class="quiz-modal" id="quizModal" role="dialog" aria-modal="true" aria-labelledby="quizHeading">
+    <div class="quiz-panel">
+      <button class="quiz-close" id="quizClose" aria-label="Fechar assistente">✕</button>
+      <h2 id="quizHeading" class="sr-only">Assistente de escolha</h2>
+      <div class="quiz-progress" id="quizProgress"></div>
+      <div id="quizBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ CHECKOUT SIMULADO ============ -->
+  <div class="checkout-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutHeading">
+    <div class="checkout-panel">
+      <button class="checkout-close" id="checkoutClose" aria-label="Fechar">✕</button>
+      <h2 id="checkoutHeading" class="sr-only">Simulação de pedido</h2>
+      <div class="checkout-steps" id="checkoutSteps"><span></span><span></span></div>
+      <div id="checkoutBody"></div>
+    </div>
+  </div>
+
+<script>
+(function(){
+
+  /* =====================================================
+     MÓDULO: preferências de acessibilidade
+  ===================================================== */
+  var A11y = (function(){
+    function apply(){
+      try{
+        var rm = localStorage.getItem('lumen_reduce_motion') === '1';
+        var hc = localStorage.getItem('lumen_high_contrast') === '1';
+        document.documentElement.classList.toggle('reduce-motion', rm);
+        document.documentElement.classList.toggle('high-contrast', hc);
+        var rmEl = document.getElementById('reduceMotionToggle');
+        var hcEl = document.getElementById('highContrastToggle');
+        if(rmEl) rmEl.checked = rm;
+        if(hcEl) hcEl.checked = hc;
+      }catch(e){}
+    }
+    function wire(){
+      var btn = document.getElementById('a11yBtn');
+      var panel = document.getElementById('a11yPanel');
+      btn.addEventListener('click', function(){
+        var isHidden = panel.hasAttribute('hidden');
+        if(isHidden){ panel.removeAttribute('hidden'); btn.setAttribute('aria-expanded','true'); }
+        else { panel.setAttribute('hidden',''); btn.setAttribute('aria-expanded','false'); }
+      });
+      document.addEventListener('click', function(e){
+        if(!panel.contains(e.target) && e.target!==btn && !panel.hasAttribute('hidden')){
+          panel.setAttribute('hidden',''); btn.setAttribute('aria-expanded','false');
+        }
+      });
+      document.getElementById('reduceMotionToggle').addEventListener('change', function(e){
+        try{ localStorage.setItem('lumen_reduce_motion', e.target.checked ? '1':'0'); }catch(err){}
+        apply();
+      });
+      document.getElementById('highContrastToggle').addEventListener('change', function(e){
+        try{ localStorage.setItem('lumen_high_contrast', e.target.checked ? '1':'0'); }catch(err){}
+        apply();
+      });
+    }
+    return { init: function(){ apply(); wire(); } };
+  })();
+
+  /* =====================================================
+     MÓDULO: utilidades de cor / material 3D
+  ===================================================== */
+  var Color = (function(){
+    function hexToRgb(hex){
+      hex = hex.replace('#','');
+      if(hex.length===3){ hex = hex.split('').map(function(c){return c+c;}).join(''); }
+      var num = parseInt(hex,16);
+      return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+    }
+    function rgbToHex(r,g,b){
+      function c(v){ v=Math.max(0,Math.min(255,Math.round(v))); var s=v.toString(16); return s.length===1?'0'+s:s; }
+      return '#'+c(r)+c(g)+c(b);
+    }
+    function shade(hex, pct){
+      var rgb = hexToRgb(hex); var t = pct>0?255:0; var p = Math.abs(pct)/100;
+      return rgbToHex(rgb.r+(t-rgb.r)*p, rgb.g+(t-rgb.g)*p, rgb.b+(t-rgb.b)*p);
+    }
+    function material(hex){
+      var light=shade(hex,42), dark=shade(hex,-38), vdark=shade(hex,-62);
+      return {
+        back: 'linear-gradient(150deg, '+light+', '+hex+' 55%, '+dark+')',
+        frame: 'repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 1px, transparent 1px 3px), linear-gradient(90deg, '+dark+', '+light+' 45%, '+hex+' 55%, '+vdark+')',
+        wall: 'radial-gradient(130% 110% at 30% 15%, '+shade(hex,-18)+', '+shade(hex,-72)+' 75%)'
+      };
+    }
+    return { material: material };
+  })();
+
+  function hashStr(s){ var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; } return h; }
+
+  /* =====================================================
+     DADOS: catálogo completo (XR ao 18)
+  ===================================================== */
+  var PRODUCTS = [
+    { id:'18-pro-max', name:'iPhone 18 Pro Max', gen:'18', year:2026, tagline:'O topo de linha mais recente da LUMEN', price:'11.999', old:null, screen:'6,9" Super Retina XDR ProMotion 120Hz', chip:'Chip A20 Pro', camera:'Tripla 48MP · teleobjetiva estendida', battery:'Até 33h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:true,
+      colors:[{name:'Titânio Cósmico',hex:'#6b6259'},{name:'Titânio Preto',hex:'#302f30'},{name:'Titânio Prata',hex:'#c9cace'},{name:'Titânio Azul-noite',hex:'#3c4657'}] },
+    { id:'18-pro', name:'iPhone 18 Pro', gen:'18', year:2026, tagline:'Desempenho Pro em um corpo mais compacto', price:'10.499', old:null, screen:'6,3" Super Retina XDR ProMotion 120Hz', chip:'Chip A20 Pro', camera:'Tripla 48MP', battery:'Até 27h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:true,
+      colors:[{name:'Titânio Cósmico',hex:'#6b6259'},{name:'Titânio Preto',hex:'#302f30'},{name:'Titânio Prata',hex:'#c9cace'}] },
+    { id:'air', name:'iPhone Air', gen:'17', year:2025, tagline:'O mais fino da linha · leveza no dia a dia', price:'8.299', old:null, screen:'6,5" Super Retina XDR OLED', chip:'Chip A19 Pro', camera:'Única 48MP de alta resolução', battery:'Até 24h de vídeo', storage:'256GB · 512GB', lenses:1, isNew:false,
+      colors:[{name:'Céu',hex:'#9fb0c4'},{name:'Preto Espacial',hex:'#1d1d1f'},{name:'Areia',hex:'#e7c9a9'}] },
+    { id:'17-pro-max', name:'iPhone 17 Pro Max', gen:'17', year:2025, tagline:'Câmera tripla e autonomia máxima', price:'10.799', old:'11.299', screen:'6,9" Super Retina XDR ProMotion 120Hz', chip:'Chip A19 Pro', camera:'Tripla 48MP', battery:'Até 33h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Preto',hex:'#3a3c40'},{name:'Titânio Azul',hex:'#5c6773'}] },
+    { id:'17-pro', name:'iPhone 17 Pro', gen:'17', year:2025, tagline:'Titânio · câmera tripla', price:'9.499', old:'10.299', screen:'6,3" Super Retina XDR ProMotion 120Hz', chip:'Chip A19 Pro', camera:'Tripla 48MP', battery:'Até 27h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Preto',hex:'#3a3c40'},{name:'Titânio Azul',hex:'#5c6773'}] },
+    { id:'17', name:'iPhone 17', gen:'17', year:2025, tagline:'O essencial, com tela maior', price:'6.999', old:null, screen:'6,3" Super Retina XDR 120Hz', chip:'Chip A19', camera:'Dupla 48MP', battery:'Até 25h de vídeo', storage:'128GB · 256GB · 512GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#1d1d1f'},{name:'Branco',hex:'#f2f1ec'},{name:'Azul-névoa',hex:'#a9c1d4'},{name:'Verde-sálvia',hex:'#b4c9ac'},{name:'Lavanda',hex:'#cfc7e2'}] },
+    { id:'16e', name:'iPhone 16e', gen:'16', year:2025, tagline:'Melhor custo-benefício da linha', price:'4.799', old:null, screen:'6,1" Super Retina XDR', chip:'Chip A18', camera:'Única 48MP', battery:'Até 26h de vídeo', storage:'128GB · 256GB', lenses:1, isNew:false,
+      colors:[{name:'Meia-noite',hex:'#1d1d1f'},{name:'Estelar',hex:'#e7ded0'}] },
+    { id:'16-pro-max', name:'iPhone 16 Pro Max', gen:'16', year:2024, tagline:'Tela grande e câmera tripla profissional', price:'9.999', old:'10.899', screen:'6,9" Super Retina XDR ProMotion 120Hz', chip:'Chip A18 Pro', camera:'Tripla 48MP', battery:'Até 33h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Preto',hex:'#302f30'},{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Branco',hex:'#e8e6df'},{name:'Titânio Deserto',hex:'#b7a58b'}] },
+    { id:'16-pro', name:'iPhone 16 Pro', gen:'16', year:2024, tagline:'Tela ProMotion e câmera tripla', price:'8.799', old:'9.499', screen:'6,3" Super Retina XDR ProMotion 120Hz', chip:'Chip A18 Pro', camera:'Tripla 48MP', battery:'Até 27h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Preto',hex:'#302f30'},{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Branco',hex:'#e8e6df'},{name:'Titânio Deserto',hex:'#b7a58b'}] },
+    { id:'16-plus', name:'iPhone 16 Plus', gen:'16', year:2024, tagline:'Tela maior, mesma essência do 16', price:'6.799', old:'7.299', screen:'6,7" Super Retina XDR', chip:'Chip A18', camera:'Dupla 48MP', battery:'Até 27h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#1d1d1f'},{name:'Branco',hex:'#f2f1ec'},{name:'Rosa',hex:'#f3d1d8'},{name:'Azul-ultramarino',hex:'#6c7bd1'}] },
+    { id:'16', name:'iPhone 16', gen:'16', year:2024, tagline:'Chip A18 e câmera dupla de 48MP', price:'5.999', old:'6.399', screen:'6,1" Super Retina XDR', chip:'Chip A18', camera:'Dupla 48MP', battery:'Até 22h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#1d1d1f'},{name:'Branco',hex:'#f2f1ec'},{name:'Rosa',hex:'#f3d1d8'},{name:'Verde-acinzentado',hex:'#b9c4b3'}] },
+    { id:'15-pro-max', name:'iPhone 15 Pro Max', gen:'15', year:2023, tagline:'O primeiro em titânio, com teleobjetiva', price:'8.999', old:'9.999', screen:'6,7" Super Retina XDR ProMotion 120Hz', chip:'Chip A17 Pro', camera:'Tripla 48MP com teleobjetiva', battery:'Até 29h de vídeo', storage:'256GB · 512GB · 1TB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Azul',hex:'#5c6773'},{name:'Titânio Branco',hex:'#e8e6df'},{name:'Titânio Preto',hex:'#302f30'}] },
+    { id:'15-pro', name:'iPhone 15 Pro', gen:'15', year:2023, tagline:'Estrutura em titânio e botão de Ação', price:'7.999', old:'8.799', screen:'6,1" Super Retina XDR ProMotion 120Hz', chip:'Chip A17 Pro', camera:'Tripla 48MP', battery:'Até 23h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Titânio Natural',hex:'#a8a196'},{name:'Titânio Azul',hex:'#5c6773'},{name:'Titânio Branco',hex:'#e8e6df'},{name:'Titânio Preto',hex:'#302f30'}] },
+    { id:'15-plus', name:'iPhone 15 Plus', gen:'15', year:2023, tagline:'Dynamic Island em tela grande', price:'6.299', old:'6.999', screen:'6,7" Super Retina XDR', chip:'Chip A16', camera:'Dupla 48MP', battery:'Até 26h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#39393b'},{name:'Azul',hex:'#a9c4d6'},{name:'Verde',hex:'#b9d0bb'},{name:'Amarelo',hex:'#ede3b4'},{name:'Rosa',hex:'#f2d4d8'}] },
+    { id:'15', name:'iPhone 15', gen:'15', year:2023, tagline:'Dynamic Island chega ao modelo padrão', price:'5.499', old:'5.999', screen:'6,1" Super Retina XDR', chip:'Chip A16', camera:'Dupla 48MP', battery:'Até 20h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#39393b'},{name:'Azul',hex:'#a9c4d6'},{name:'Verde',hex:'#b9d0bb'},{name:'Amarelo',hex:'#ede3b4'},{name:'Rosa',hex:'#f2d4d8'}] },
+    { id:'14-pro-max', name:'iPhone 14 Pro Max', gen:'14', year:2022, tagline:'Dynamic Island estreia na linha Pro', price:'7.999', old:'8.699', screen:'6,7" Super Retina XDR ProMotion 120Hz', chip:'Chip A16', camera:'Tripla 48MP', battery:'Até 29h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Roxo-profundo',hex:'#4e4560'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Preto-espacial',hex:'#2b2b2c'}] },
+    { id:'14-pro', name:'iPhone 14 Pro', gen:'14', year:2022, tagline:'Câmera de 48MP e tela sempre ativa', price:'6.999', old:'7.599', screen:'6,1" Super Retina XDR ProMotion 120Hz', chip:'Chip A16', camera:'Tripla 48MP', battery:'Até 23h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Roxo-profundo',hex:'#4e4560'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Preto-espacial',hex:'#2b2b2c'}] },
+    { id:'14-plus', name:'iPhone 14 Plus', gen:'14', year:2022, tagline:'Bateria de longa duração em tela grande', price:'5.499', old:'5.999', screen:'6,7" Super Retina XDR', chip:'Chip A15', camera:'Dupla 12MP', battery:'Até 26h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Meia-noite',hex:'#1d1d1f'},{name:'Estelar',hex:'#e7ded0'},{name:'Roxo',hex:'#d6cbe0'},{name:'Azul',hex:'#a9c1d4'},{name:'(PRODUCT)RED',hex:'#b1041e'}] },
+    { id:'14', name:'iPhone 14', gen:'14', year:2022, tagline:'Segurança Emergência SOS via satélite', price:'4.799', old:'5.199', screen:'6,1" Super Retina XDR', chip:'Chip A15', camera:'Dupla 12MP', battery:'Até 20h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Meia-noite',hex:'#1d1d1f'},{name:'Estelar',hex:'#e7ded0'},{name:'Roxo',hex:'#d6cbe0'},{name:'Azul',hex:'#a9c1d4'},{name:'(PRODUCT)RED',hex:'#b1041e'}] },
+    { id:'13-pro-max', name:'iPhone 13 Pro Max', gen:'13', year:2021, tagline:'ProMotion 120Hz estreia na linha', price:'6.999', old:'7.599', screen:'6,7" Super Retina XDR ProMotion 120Hz', chip:'Chip A15', camera:'Tripla 12MP', battery:'Até 28h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Grafite',hex:'#4a4a4a'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Azul-sierra',hex:'#6b7f96'}] },
+    { id:'13-pro', name:'iPhone 13 Pro', gen:'13', year:2021, tagline:'Câmera macro e teleobjetiva 3x', price:'5.999', old:'6.499', screen:'6,1" Super Retina XDR ProMotion 120Hz', chip:'Chip A15', camera:'Tripla 12MP', battery:'Até 22h de vídeo', storage:'128GB · 256GB · 512GB', lenses:3, isNew:false,
+      colors:[{name:'Grafite',hex:'#4a4a4a'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Verde-alpino',hex:'#6a715f'}] },
+    { id:'13', name:'iPhone 13', gen:'13', year:2021, tagline:'Câmeras diagonais e mais autonomia', price:'4.299', old:'4.699', screen:'6,1" Super Retina XDR', chip:'Chip A15', camera:'Dupla 12MP', battery:'Até 19h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Meia-noite',hex:'#1d1d1f'},{name:'Estelar',hex:'#e7ded0'},{name:'Rosa',hex:'#f4cfd8'},{name:'Azul',hex:'#a7c1d9'},{name:'Verde',hex:'#b4c9ac'}] },
+    { id:'13-mini', name:'iPhone 13 mini', gen:'13', year:2021, tagline:'Tudo do 13 em corpo compacto', price:'3.799', old:'4.199', screen:'5,4" Super Retina XDR', chip:'Chip A15', camera:'Dupla 12MP', battery:'Até 17h de vídeo', storage:'128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Meia-noite',hex:'#1d1d1f'},{name:'Estelar',hex:'#e7ded0'},{name:'Rosa',hex:'#f4cfd8'},{name:'Azul',hex:'#a7c1d9'}] },
+    { id:'12-pro-max', name:'iPhone 12 Pro Max', gen:'12', year:2020, tagline:'O maior sensor da geração 12', price:'5.499', old:'5.999', screen:'6,7" Super Retina XDR', chip:'Chip A14 Bionic', camera:'Tripla 12MP', battery:'Até 20h de vídeo', storage:'128GB · 256GB', lenses:3, isNew:false,
+      colors:[{name:'Grafite',hex:'#4a4a4a'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Azul-pacífico',hex:'#3b4a5a'}] },
+    { id:'12-pro', name:'iPhone 12 Pro', gen:'12', year:2020, tagline:'LiDAR e gravação em Dolby Vision', price:'4.699', old:'4.999', screen:'6,1" Super Retina XDR', chip:'Chip A14 Bionic', camera:'Tripla 12MP', battery:'Até 17h de vídeo', storage:'128GB · 256GB', lenses:3, isNew:false,
+      colors:[{name:'Grafite',hex:'#4a4a4a'},{name:'Prateado',hex:'#e3e4e6'},{name:'Dourado',hex:'#f0dcc0'},{name:'Azul-pacífico',hex:'#3b4a5a'}] },
+    { id:'12', name:'iPhone 12', gen:'12', year:2020, tagline:'Design de bordas retas estreia na linha', price:'3.699', old:'3.999', screen:'6,1" Super Retina XDR', chip:'Chip A14 Bionic', camera:'Dupla 12MP', battery:'Até 17h de vídeo', storage:'64GB · 128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#1d1d1f'},{name:'Branco',hex:'#f2f1ec'},{name:'Azul',hex:'#5f7d95'},{name:'Verde',hex:'#a9c2ab'},{name:'(PRODUCT)RED',hex:'#b1041e'}] },
+    { id:'12-mini', name:'iPhone 12 mini', gen:'12', year:2020, tagline:'O 5G mais compacto já lançado', price:'3.299', old:'3.599', screen:'5,4" Super Retina XDR', chip:'Chip A14 Bionic', camera:'Dupla 12MP', battery:'Até 15h de vídeo', storage:'64GB · 128GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Preto',hex:'#1d1d1f'},{name:'Branco',hex:'#f2f1ec'},{name:'Azul',hex:'#5f7d95'},{name:'Verde',hex:'#a9c2ab'}] },
+    { id:'11-pro-max', name:'iPhone 11 Pro Max', gen:'11', year:2019, tagline:'A primeira câmera tripla da Apple', price:'4.299', old:'4.699', screen:'6,5" Super Retina XDR', chip:'Chip A13 Bionic', camera:'Tripla 12MP', battery:'Até 20h de vídeo', storage:'64GB · 256GB', lenses:3, isNew:false,
+      colors:[{name:'Cinza-espacial',hex:'#4b4b4d'},{name:'Prateado',hex:'#e3e4e6'},{name:'Verde-meia-noite',hex:'#4e5851'}] },
+    { id:'11-pro', name:'iPhone 11 Pro', gen:'11', year:2019, tagline:'Compacto com câmera ultra-angular', price:'3.799', old:'4.099', screen:'5,8" Super Retina XDR', chip:'Chip A13 Bionic', camera:'Tripla 12MP', battery:'Até 18h de vídeo', storage:'64GB · 256GB', lenses:3, isNew:false,
+      colors:[{name:'Cinza-espacial',hex:'#4b4b4d'},{name:'Prateado',hex:'#e3e4e6'},{name:'Verde-meia-noite',hex:'#4e5851'}] },
+    { id:'11', name:'iPhone 11', gen:'11', year:2019, tagline:'O queridinho de sempre, com câmera dupla', price:'2.899', old:'3.199', screen:'6,1" Liquid Retina HD', chip:'Chip A13 Bionic', camera:'Dupla 12MP', battery:'Até 17h de vídeo', storage:'64GB · 128GB', lenses:2, isNew:false,
+      colors:[{name:'Branco',hex:'#f2f1ec'},{name:'Preto',hex:'#1d1d1f'},{name:'Verde',hex:'#a7c4b5'},{name:'Amarelo',hex:'#f7dc6f'},{name:'Roxo',hex:'#d0c7e2'}] },
+    { id:'xs-max', name:'iPhone XS Max', gen:'X', year:2018, tagline:'A maior tela da geração X', price:'2.699', old:'2.999', screen:'6,5" Super Retina', chip:'Chip A12 Bionic', camera:'Dupla 12MP', battery:'Até 15h de vídeo', storage:'64GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Prateado',hex:'#e3e4e6'},{name:'Cinza-espacial',hex:'#4b4b4d'},{name:'Dourado',hex:'#f0dcc0'}] },
+    { id:'xs', name:'iPhone XS', gen:'X', year:2018, tagline:'Reconhecimento facial de segunda geração', price:'2.399', old:'2.699', screen:'5,8" Super Retina', chip:'Chip A12 Bionic', camera:'Dupla 12MP', battery:'Até 12h de vídeo', storage:'64GB · 256GB', lenses:2, isNew:false,
+      colors:[{name:'Prateado',hex:'#e3e4e6'},{name:'Cinza-espacial',hex:'#4b4b4d'},{name:'Dourado',hex:'#f0dcc0'}] },
+    { id:'xr', name:'iPhone XR', gen:'X', year:2018, tagline:'O clássico acessível que ainda faz sucesso', price:'1.999', old:'2.199', screen:'6,1" Liquid Retina HD', chip:'Chip A12 Bionic', camera:'Única 12MP', battery:'Até 16h de vídeo', storage:'64GB · 128GB', lenses:1, isNew:false,
+      colors:[{name:'Branco',hex:'#f2f1ec'},{name:'Preto',hex:'#1d1d1f'},{name:'Azul',hex:'#5a7fa6'},{name:'Amarelo',hex:'#f2c94c'},{name:'Coral',hex:'#ff6f5e'}] }
+  ];
+  var PRODUCTS_BY_ID = {};
+  PRODUCTS.forEach(function(p){ PRODUCTS_BY_ID[p.id] = p; });
+
+  var GENS = [
+    { id:'todos', label:'Todos' }, { id:'18', label:'iPhone 18' }, { id:'17', label:'iPhone 17' },
+    { id:'16', label:'iPhone 16' }, { id:'15', label:'iPhone 15' }, { id:'14', label:'iPhone 14' },
+    { id:'13', label:'iPhone 13' }, { id:'12', label:'iPhone 12' }, { id:'11', label:'iPhone 11' }, { id:'X', label:'XR / XS' }
+  ];
+
+  /* =====================================================
+     MÓDULO: telefone 3D + escassez
+  ===================================================== */
+  function phoneCubeHTML(product, colorIndex){
+    var c = product.colors[colorIndex] || product.colors[0];
+    var m = Color.material(c.hex);
+    var camClass = product.lenses===1 ? 'c1' : (product.lenses===2 ? 'c2' : '');
+    var lensesHTML = '';
+    if(product.lenses>=1) lensesHTML += '<div class="lens l1"></div>';
+    if(product.lenses>=2) lensesHTML += '<div class="lens l2"></div>';
+    if(product.lenses>=3) lensesHTML += '<div class="lens l3"></div><div class="flash-dot"></div>';
+    return (
+      '<div class="phone3d" data-pid="'+product.id+'" style="--back:'+m.back+';--frame:'+m.frame+';--wall:'+m.wall+'">'+
+        '<div class="face front"><div class="screen"><div class="island"></div>'+
+          '<div class="lock-time"><div class="hh">9:41</div><div class="dd">'+product.name.replace('iPhone ','')+'</div></div>'+
+          '<div class="homebar"></div></div></div>'+
+        '<div class="face back"><div class="cam-module '+camClass+'">'+lensesHTML+'</div></div>'+
+        '<div class="face left"></div><div class="face right"></div><div class="face top"></div><div class="face bottom"></div>'+
+      '</div>'
+    );
+  }
+  function swatchesHTML(product, activeIndex){
+    return product.colors.map(function(c,i){
+      return '<button class="swatch" style="background:'+c.hex+'" data-idx="'+i+'" aria-label="Cor '+c.name+'" aria-pressed="'+(i===activeIndex)+'"></button>';
+    }).join('');
+  }
+  function updatePhoneColor(phoneEl, product, idx){
+    var m = Color.material(product.colors[idx].hex);
+    phoneEl.style.setProperty('--back', m.back);
+    phoneEl.style.setProperty('--frame', m.frame);
+    phoneEl.style.setProperty('--wall', m.wall);
+  }
+  function stockFor(id, idx){
+    var seed = hashStr(id+'-'+idx);
+    if(seed % 4 === 0){ return (seed % 3) + 1; }
+    return null;
+  }
+
+  /* =====================================================
+     MÓDULO: avaliações analíticas (localStorage)
+  ===================================================== */
+  // Limpa avaliações antigas da versão anterior uma única vez.
+  // Depois disso, novas avaliações permanecem normalmente no navegador.
+  (function resetPreviousReviews(){
+    var RESET_KEY = 'lumen_reviews_reset_v3';
+    try{
+      if(!localStorage.getItem(RESET_KEY)){
+        for(var i=0;i<localStorage.length;i++){
+          var key = localStorage.key(i);
+          if(key && (key.indexOf('lumen_reviews_')===0 || key==='lumen_store_reviews')) localStorage.removeItem(key);
+        }
+        localStorage.setItem(RESET_KEY,'1');
+      }
+    }catch(e){}
+  })();
+
+  var Reviews = (function(){
+    function getAll(id){
+      try{ var raw = localStorage.getItem('lumen_reviews_'+id); return raw ? JSON.parse(raw) : []; }
+      catch(e){ return []; }
+    }
+    function add(id, review){
+      var list = getAll(id); list.unshift(review);
+      try{ localStorage.setItem('lumen_reviews_'+id, JSON.stringify(list)); }catch(e){}
+      return list;
+    }
+    function averages(list){
+      if(!list.length) return { geral:0, bateria:0, camera:0, count:0 };
+      var s = { geral:0, bateria:0, camera:0 };
+      list.forEach(function(r){ s.geral += r.geral; s.bateria += r.bateria; s.camera += r.camera; });
+      return { geral: s.geral/list.length, bateria: s.bateria/list.length, camera: s.camera/list.length, count: list.length };
+    }
+    return { getAll:getAll, add:add, averages:averages };
+  })();
+
+  function starSVG(){
+    return '<svg viewBox="0 0 24 24"><path class="star-shape" d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8L12 3.5z"/></svg>';
+  }
+  function renderStaticStars(container, value){
+    var html = '';
+    for(var i=1;i<=5;i++){ html += '<span class="star-btn'+(i<=Math.round(value)?' filled':'')+'">'+starSVG()+'</span>'; }
+    container.innerHTML = html;
+  }
+  function renderCardRating(container, productId){
+    var list = Reviews.getAll(productId);
+    var avg = Reviews.averages(list);
+    var starsHTML = '';
+    for(var i=1;i<=5;i++){ starsHTML += '<span class="star-btn'+(i<=Math.round(avg.geral)?' filled':'')+'">'+starSVG()+'</span>'; }
+    container.innerHTML = '<div class="stars">'+starsHTML+'</div><div class="rating-meta">'+
+      (avg.count ? (avg.geral.toFixed(1)+' · '+avg.count+' avaliaç'+(avg.count===1?'ão':'ões')) : 'Sem avaliações ainda') +'</div>';
+  }
+
+  /* =====================================================
+     MÓDULO: grid + filtros de produto
+  ===================================================== */
+  var grid = document.getElementById('productGrid');
+  var chipRow = document.getElementById('chipRow');
+  var activeGen = 'todos';
+
+  function cardHTML(product){
+    var priceOld = product.old ? '<span class="price-old">R$ '+product.old+'</span>' : '';
+    var badge = product.isNew ? '<span class="badge-new">Novo</span>' : '';
+    return (
+      '<article class="card" tabindex="0" role="button" aria-label="Ver detalhes do '+product.name+'" data-pid="'+product.id+'">'+
+        badge+
+        '<div class="stage small">'+phoneCubeHTML(product,0)+'</div>'+
+        '<h3>'+product.name+'</h3>'+
+        '<p class="tag">'+product.tagline+'</p>'+
+        '<div class="rating" data-rating></div>'+
+        '<div class="price-row"><span class="price">R$ '+product.price+'</span>'+priceOld+'</div>'+
+        '<div class="swatches" data-swatches>'+swatchesHTML(product,0)+'</div>'+
+        '<div class="color-name">'+product.colors[0].name+'</div>'+
+        '<div class="scarcity" data-scarcity></div>'+
+        '<button class="btn btn-primary btn-magnetic" data-buy>Adquirir agora</button>'+
+      '</article>'
+    );
+  }
+
+  function paintScarcity(el, product, idx){
+    var qty = stockFor(product.id, idx);
+    el.textContent = qty ? ('Restam apenas '+qty+' unidade'+(qty>1?'s':'')+' nesta cor') : '';
+  }
+
+  function renderGrid(){
+    var list = PRODUCTS.filter(function(p){ return activeGen==='todos' || p.gen===activeGen; });
+    grid.innerHTML = list.map(cardHTML).join('');
+
+    initMagneticButtons();
+
+    grid.querySelectorAll('.card').forEach(function(cardEl){
+      var product = PRODUCTS_BY_ID[cardEl.dataset.pid];
+      var phoneEl = cardEl.querySelector('.phone3d');
+      var colorNameEl = cardEl.querySelector('.color-name');
+      var scarcityEl = cardEl.querySelector('[data-scarcity]');
+      paintScarcity(scarcityEl, product, 0);
+
+      cardEl.querySelectorAll('.swatch').forEach(function(sw){
+        sw.addEventListener('click', function(e){
+          e.stopPropagation();
+          var idx = parseInt(sw.dataset.idx,10);
+          updatePhoneColor(phoneEl, product, idx);
+          colorNameEl.textContent = product.colors[idx].name;
+          paintScarcity(scarcityEl, product, idx);
+          cardEl.querySelectorAll('.swatch').forEach(function(s){ s.setAttribute('aria-pressed','false'); });
+          sw.setAttribute('aria-pressed','true');
+        });
+      });
+
+      renderCardRating(cardEl.querySelector('[data-rating]'), product.id);
+      cardEl.querySelector('[data-rating]').addEventListener('click', function(e){ e.stopPropagation(); });
+      cardEl.querySelector('[data-buy]').addEventListener('click', function(e){ e.stopPropagation(); openProduct(product.id); });
+
+      cardEl.addEventListener('click', function(){ openProduct(product.id); });
+      cardEl.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openProduct(product.id); } });
+    });
+  }
+
+  function renderChips(){
+    chipRow.innerHTML = GENS.map(function(g){
+      return '<button type="button" class="chip" aria-pressed="'+(g.id===activeGen)+'" data-gen="'+g.id+'">'+g.label+'</button>';
+    }).join('');
+    chipRow.querySelectorAll('.chip').forEach(function(chip){
+      chip.addEventListener('click', function(){ activeGen = chip.dataset.gen; renderChips(); renderGrid(); });
+    });
+  }
+
+  /* =====================================================
+     MÓDULO: comparador lado a lado
+  ===================================================== */
+  function initCompare(){
+    var selA = document.getElementById('compareA');
+    var selB = document.getElementById('compareB');
+    var table = document.getElementById('compareTable');
+    var opts = PRODUCTS.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    selA.value = '17-pro'; selB.value = '17-pro-max';
+
+    function renderCompare(){
+      var a = PRODUCTS_BY_ID[selA.value], b = PRODUCTS_BY_ID[selB.value];
+      var rows = [
+        ['Preço','R$ '+a.price,'R$ '+b.price],
+        ['Tela', a.screen, b.screen],
+        ['Chip', a.chip, b.chip],
+        ['Câmera', a.camera, b.camera],
+        ['Bateria', a.battery, b.battery],
+        ['Armazenamento', a.storage, b.storage],
+        ['Ano', String(a.year), String(b.year)]
+      ];
+      table.innerHTML =
+        '<thead><tr><th scope="col">Especificação</th><th scope="col">'+a.name+'</th><th scope="col">'+b.name+'</th></tr></thead><tbody>'+
+        rows.map(function(r){
+          var diff = r[1]!==r[2];
+          return '<tr><th scope="row">'+r[0]+'</th><td'+(diff?' class="diff"':'')+'>'+r[1]+'</td><td'+(diff?' class="diff"':'')+'>'+r[2]+'</td></tr>';
+        }).join('')+
+        '</tbody>';
+    }
+    selA.addEventListener('change', renderCompare);
+    selB.addEventListener('change', renderCompare);
+    renderCompare();
+  }
+
+  /* =====================================================
+     MÓDULO: avaliações da loja
+  ===================================================== */
+  var StoreReviews = (function(){
+    var KEY = 'lumen_store_reviews';
+    function getAll(){
+      try{ var raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : []; }
+      catch(e){ return []; }
+    }
+    function add(review){
+      var list = getAll(); list.unshift(review);
+      try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(e){}
+      return list;
+    }
+    function average(list){
+      if(!list.length) return { geral:0, count:0 };
+      var total = list.reduce(function(sum,r){ return sum + Number(r.geral || 0); }, 0);
+      return { geral: total/list.length, count:list.length };
+    }
+    return { getAll:getAll, add:add, average:average };
+  })();
+
+  function renderStoreRating(){
+    var stars = document.getElementById('storeRatingStars');
+    var value = document.getElementById('storeRatingValue');
+    var count = document.getElementById('storeRatingCount');
+    if(!stars || !value || !count) return;
+    var avg = StoreReviews.average(StoreReviews.getAll());
+    var html = '';
+    for(var i=1;i<=5;i++) html += '<span class="star-btn'+(i<=Math.round(avg.geral)?' filled':'')+'">'+starSVG()+'</span>';
+    stars.innerHTML = html;
+    value.textContent = avg.count ? avg.geral.toFixed(1)+'/5' : '—';
+    count.textContent = avg.count ? (avg.count+' avaliaç'+(avg.count===1?'ão':'ões')) : 'Ainda sem avaliações';
+  }
+
+  function initStoreReview(){
+    var toggle = document.getElementById('storeReviewToggle');
+    var form = document.getElementById('storeReviewForm');
+    var picker = document.getElementById('storeReviewPicker');
+    if(!toggle || !form || !picker) return;
+    var selected = 0;
+    for(var i=1;i<=5;i++) picker.innerHTML += '<button type="button" class="star-btn" data-store-star="'+i+'" aria-label="'+i+' de 5">'+starSVG()+'</button>';
+    picker.querySelectorAll('[data-store-star]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        selected = Number(btn.dataset.storeStar);
+        picker.querySelectorAll('[data-store-star]').forEach(function(x){ x.classList.toggle('filled', Number(x.dataset.storeStar) <= selected); });
+      });
+    });
+    toggle.addEventListener('click', function(){
+      form.hidden = !form.hidden;
+      if(!form.hidden) picker.querySelector('[data-store-star="1"]').focus();
+    });
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var text = document.getElementById('storeReviewText').value.trim();
+      if(!selected || !text){ alert('Escolha uma nota e escreva um comentário antes de publicar.'); return; }
+      StoreReviews.add({ geral:selected, comment:text, date:new Date().toLocaleDateString('pt-BR') });
+      selected = 0;
+      document.getElementById('storeReviewText').value = '';
+      picker.querySelectorAll('[data-store-star]').forEach(function(x){ x.classList.remove('filled'); });
+      form.hidden = true;
+      renderStoreRating();
+    });
+    renderStoreRating();
+  }
+
+  /* =====================================================
+     MÓDULO: página de produto + reviews
+  ===================================================== */
+  var productPage = document.getElementById('productPage');
+  var ppStage = document.getElementById('ppStage');
+  var lastFocused = null;
+  var currentProduct = null;
+  var reviewDraft = { geral:0, bateria:0, camera:0 };
+
+  function buildPicker(containerId, field){
+    var el = document.getElementById(containerId);
+    var html = '';
+    for(var i=1;i<=5;i++){ html += '<button type="button" class="star-btn" data-value="'+i+'" aria-label="'+i+' de 5">'+starSVG()+'</button>'; }
+    el.innerHTML = html;
+    el.querySelectorAll('.star-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        reviewDraft[field] = parseInt(b.dataset.value,10);
+        el.querySelectorAll('.star-btn').forEach(function(x){ x.classList.toggle('filled', parseInt(x.dataset.value,10) <= reviewDraft[field]); });
+      });
+    });
+  }
+  buildPicker('pickGeral','geral'); buildPicker('pickBateria','bateria'); buildPicker('pickCamera','camera');
+
+  function renderReviews(productId){
+    var list = Reviews.getAll(productId);
+    var avg = Reviews.averages(list);
+    var summary = document.getElementById('reviewsSummary');
+    if(!list.length){
+      summary.innerHTML = '<p class="review-empty">Ainda não há avaliações para este modelo. Seja o primeiro a avaliar.</p>';
+    } else {
+      summary.innerHTML =
+        '<div class="reviews-summary">'+
+          '<div class="reviews-avg"><div class="num">'+avg.geral.toFixed(1)+'</div><div class="stars" id="ravgStars"></div><div class="rating-meta">'+avg.count+' avaliaç'+(avg.count===1?'ão':'ões')+'</div></div>'+
+          '<div class="reviews-sub"><div><b>'+avg.bateria.toFixed(1)+'</b>Bateria</div><div><b>'+avg.camera.toFixed(1)+'</b>Câmera</div></div>'+
+        '</div>';
+      renderStaticStars(document.getElementById('ravgStars'), avg.geral);
+    }
+    var list_html = list.map(function(r){
+      var subStars = document.createElement('div');
+      return '<div class="review-card">'+
+        '<div class="review-top"><span class="verified">✓ Cliente verificado</span><span class="review-date">'+r.date+'</span></div>'+
+        '<div class="stars" style="margin-bottom:6px;">'+[1,2,3,4,5].map(function(i){return '<span class="star-btn'+(i<=r.geral?' filled':'')+'">'+starSVG()+'</span>';}).join('')+'</div>'+
+        '<div class="review-subscores"><span>Bateria: '+r.bateria+'/5</span><span>Câmera: '+r.camera+'/5</span></div>'+
+        '<p class="review-text">'+r.comment+'</p>'+
+      '</div>';
+    }).join('');
+    document.getElementById('reviewsList').innerHTML = list_html;
+  }
+
+  document.getElementById('toggleReviewForm').addEventListener('click', function(){
+    var form = document.getElementById('reviewForm');
+    form.hidden = !form.hidden;
+    if(!form.hidden) document.getElementById('reviewText').focus();
+  });
+
+  document.getElementById('reviewForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!currentProduct) return;
+    if(!reviewDraft.geral || !reviewDraft.bateria || !reviewDraft.camera){
+      alert('Por favor, avalie geral, bateria e câmera antes de publicar.');
+      return;
+    }
+    var comment = document.getElementById('reviewText').value.trim();
+    if(!comment) return;
+    Reviews.add(currentProduct.id, {
+      geral: reviewDraft.geral, bateria: reviewDraft.bateria, camera: reviewDraft.camera,
+      comment: comment, date: new Date().toLocaleDateString('pt-BR')
+    });
+    reviewDraft = { geral:0, bateria:0, camera:0 };
+    document.getElementById('reviewText').value = '';
+    ['pickGeral','pickBateria','pickCamera'].forEach(function(id){
+      document.querySelectorAll('#'+id+' .star-btn').forEach(function(b){ b.classList.remove('filled'); });
+    });
+    document.getElementById('reviewForm').hidden = true;
+    renderReviews(currentProduct.id);
+    // Atualiza imediatamente a nota e a quantidade no catálogo, sem precisar recarregar a página.
+    var cardRating = document.querySelector('.card[data-pid="'+currentProduct.id+'"] [data-rating]');
+    if(cardRating) renderCardRating(cardRating, currentProduct.id);
+  });
+
+  function openProduct(id){
+    var product = PRODUCTS_BY_ID[id];
+    if(!product) return;
+    currentProduct = product;
+    lastFocused = document.activeElement;
+
+    document.getElementById('ppKicker').textContent = 'iPhone '+product.gen+' · '+product.year;
+    document.getElementById('ppName').textContent = product.name;
+    document.getElementById('ppTag').textContent = product.tagline;
+    document.getElementById('ppPrice').textContent = 'R$ '+product.price;
+    document.getElementById('ppPriceOld').textContent = product.old ? ('R$ '+product.old) : '';
+
+    ppStage.innerHTML = phoneCubeHTML(product, 0);
+    var phoneEl = ppStage.querySelector('.phone3d');
+
+    var swatchesEl = document.getElementById('ppSwatches');
+    var colorNameEl = document.getElementById('ppColorName');
+    var scarcityEl = document.getElementById('ppScarcity');
+    swatchesEl.innerHTML = swatchesHTML(product, 0);
+    colorNameEl.textContent = product.colors[0].name;
+    paintScarcity(scarcityEl, product, 0);
+    swatchesEl.querySelectorAll('.swatch').forEach(function(sw){
+      sw.addEventListener('click', function(){
+        var idx = parseInt(sw.dataset.idx,10);
+        updatePhoneColor(phoneEl, product, idx);
+        colorNameEl.textContent = product.colors[idx].name;
+        paintScarcity(scarcityEl, product, idx);
+        swatchesEl.querySelectorAll('.swatch').forEach(function(s){ s.setAttribute('aria-pressed','false'); });
+        sw.setAttribute('aria-pressed','true');
+      });
+    });
+
+    document.getElementById('ppSpecs').innerHTML = [
+      ['Tela', product.screen], ['Chip', product.chip], ['Câmera', product.camera],
+      ['Bateria', product.battery], ['Armazenamento', product.storage], ['Ano de lançamento', String(product.year)]
+    ].map(function(row){ return '<div class="spec-row"><span>'+row[0]+'</span><span>'+row[1]+'</span></div>'; }).join('');
+
+    renderReviews(product.id);
+    document.getElementById('reviewForm').hidden = true;
+
+    productPage.classList.add('open');
+    document.body.classList.add('pp-locked');
+    document.getElementById('ppBack').focus();
+    updateWhatsAppContext();
+  }
+  function closeProduct(){
+    productPage.classList.remove('open');
+    document.body.classList.remove('pp-locked');
+    currentProduct = null;
+    if(lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    updateWhatsAppContext();
+  }
+  document.getElementById('ppBack').addEventListener('click', closeProduct);
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && productPage.classList.contains('open')) closeProduct(); });
+
+  /* =====================================================
+     MÓDULO: WhatsApp contextual
+  ===================================================== */
+  var WA_NUMBER = '5535999067332'; // +55 (35) 99906-7332
+  function waLink(message){ return 'https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(message); }
+  function updateWhatsAppContext(){
+    var msg = currentProduct
+      ? ('Olá LUMEN, estou navegando na página do '+currentProduct.name+' e gostaria de tirar uma dúvida específica sobre este modelo.')
+      : 'Olá LUMEN, gostaria de saber mais sobre os iPhones disponíveis.';
+    var url = waLink(msg);
+    document.getElementById('waFloat').onclick = function(){ window.open(url,'_blank','noopener'); };
+    var footerWa = document.getElementById('footerWaLink');
+    if(footerWa) footerWa.onclick = function(e){ e.preventDefault(); window.open(url,'_blank','noopener'); };
+  }
+
+  /* =====================================================
+     MÓDULO: roteador (Home / Produtos / Suporte)
+  ===================================================== */
+  var VALID_ROUTES = ['home','produtos','suporte'];
+  function showRoute(route){
+    if(VALID_ROUTES.indexOf(route)===-1) route = 'home';
+    document.querySelectorAll('.page').forEach(function(p){ p.hidden = p.dataset.page !== route; });
+    document.querySelectorAll('nav.links a').forEach(function(a){
+      if(a.dataset.route === route) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
+    });
+    window.scrollTo({ top:0, behavior: document.documentElement.classList.contains('reduce-motion') ? 'auto' : 'smooth' });
+  }
+  function routeFromHash(){ return (location.hash || '#home').replace('#','').split('?')[0] || 'home'; }
+  window.addEventListener('hashchange', function(){ showRoute(routeFromHash()); });
+  document.querySelectorAll('[data-route]').forEach(function(el){
+    if(el.tagName === 'BUTTON'){
+      el.addEventListener('click', function(){ location.hash = el.dataset.route; });
+    }
+  });
+
+  /* =====================================================
+     MÓDULO: FAQ com busca + acordeões
+  ===================================================== */
+  var FAQ = [
+    { cat:'Compra e pagamento', items:[
+      { q:'Quais formas de pagamento são aceitas?', a:'Cartão de crédito em até 12x sem juros, Pix com 5% de desconto à vista e boleto bancário.' },
+      { q:'Os aparelhos são novos ou seminovos?', a:'Todos os modelos da linha atual são lacrados de fábrica. Gerações anteriores podem ser seminovas certificadas, sempre identificadas na ficha do produto.' }
+    ]},
+    { cat:'Garantia e assistência', items:[
+      { q:'Qual a garantia dos aparelhos?', a:'1 ano de garantia oficial Apple mais 6 meses de cobertura exclusiva da LUMEN, sem custo adicional.' },
+      { q:'Como acionar a garantia?', a:'Basta abrir um chamado pelo formulário de suporte consultivo ou levar o aparelho a uma unidade física com a nota fiscal.' }
+    ]},
+    { cat:'Troca e entrega', items:[
+      { q:'Como funciona a troca do meu iPhone atual?', a:'Avaliamos o aparelho em loja, na hora, e o valor é abatido diretamente no novo modelo escolhido.' },
+      { q:'Qual o prazo de entrega?', a:'Capitais recebem em até 24h. Demais regiões, de 2 a 5 dias úteis. Retirada em loja fica pronta em 30 minutos.' }
+    ]}
+  ];
+  function renderFAQ(filter){
+    var list = document.getElementById('faqList');
+    var term = (filter||'').toLowerCase().trim();
+    var htmlOut = ''; var anyMatch = false;
+    FAQ.forEach(function(group, gi){
+      var itemsHtml = '';
+      group.items.forEach(function(item, ii){
+        var match = !term || (item.q+' '+item.a).toLowerCase().indexOf(term) !== -1;
+        if(match) anyMatch = true;
+        itemsHtml += '<details class="faq-item"'+(match?'':' hidden')+(term && match ? ' open':'')+'>'+
+          '<summary>'+item.q+'</summary><p>'+item.a+'</p></details>';
+      });
+      htmlOut += '<details class="faq-category" open><summary>'+group.cat+'</summary>'+itemsHtml+'</details>';
+    });
+    list.innerHTML = htmlOut;
+    document.getElementById('faqEmpty').hidden = anyMatch || !term;
+  }
+  document.getElementById('faqSearch').addEventListener('input', function(e){ renderFAQ(e.target.value); });
+
+  /* =====================================================
+     MÓDULO: rastreio simulado
+  ===================================================== */
+  document.getElementById('trackForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var code = document.getElementById('trackInput').value.trim();
+    var result = document.getElementById('trackResult');
+    if(!code){ return; }
+    var seed = hashStr(code.toUpperCase());
+    var stage = seed % 5; // 0..4
+    var steps = [
+      { title:'Pedido confirmado', desc:'Recebemos o pagamento e iniciamos a separação.' },
+      { title:'Em separação', desc:'Seu iPhone está sendo preparado e testado no centro de distribuição.' },
+      { title:'Enviado', desc:'O pedido saiu do centro de distribuição rumo à sua região.' },
+      { title:'Saiu para entrega', desc:'O entregador está a caminho do endereço informado.' },
+      { title:'Entregue', desc:'Pedido entregue com sucesso. Aproveite seu novo iPhone!' }
+    ];
+    var today = new Date();
+    var html = '<div class="timeline">'+steps.map(function(s,i){
+      var d = new Date(today); d.setDate(d.getDate() - (stage-i));
+      var dateStr = i<=stage ? d.toLocaleDateString('pt-BR') : 'Previsto';
+      return '<div class="timeline-step'+(i<=stage?' done':'')+'"><div class="timeline-dot"></div>'+
+        '<div><div class="timeline-title">'+s.title+'</div><div class="timeline-date">'+dateStr+' — '+s.desc+'</div></div></div>';
+    }).join('')+'</div>';
+    result.innerHTML = html;
+  });
+
+  /* =====================================================
+     MÓDULO: formulário de suporte consultivo
+  ===================================================== */
+  document.getElementById('cFile').addEventListener('change', function(e){
+    var label = document.getElementById('fileLabel');
+    label.textContent = e.target.files && e.target.files[0] ? ('Anexado: '+e.target.files[0].name) : 'Clique para anexar um arquivo';
+  });
+  document.getElementById('fileDrop').addEventListener('click', function(){ document.getElementById('cFile').click(); });
+
+  document.getElementById('contactForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var urgencia = document.getElementById('cUrgencia').value;
+    var sla = urgencia === 'alta' ? 'até 2 horas' : (urgencia === 'media' ? 'até 24 horas' : 'até 3 dias úteis');
+    var box = document.getElementById('contactSuccess');
+    box.textContent = 'Recebemos sua mensagem. Nossa equipe consultiva responderá '+sla+' no e-mail informado.';
+    box.classList.add('show');
+    this.reset();
+    document.getElementById('fileLabel').textContent = 'Clique para anexar um arquivo (nota fiscal, foto do aparelho...)';
+  });
+
+  /* =====================================================
+     INICIALIZAÇÃO
+  ===================================================== */
+  A11y.init();
+  renderChips();
+  renderGrid();
+  initCompare();
+  renderFAQ('');
+  initStoreReview();
+  updateWhatsAppContext();
+  showRoute(routeFromHash());
+
+  var intro = document.getElementById('intro');
+  var enterBtn = document.getElementById('enterBtn');
+  var navLogo = document.getElementById('navLogo');
+  /* =====================================================
+     MOVIMENTO MAGNÉTICO DOS BOTÕES — efeito visual
+     Inspirado no segundo código; não altera ações/cliques.
+  ===================================================== */
+  function initMagneticButtons(){
+    var controls = document.querySelectorAll('button, a.btn');
+
+    controls.forEach(function(btn){
+      if(btn.dataset.magneticReady === 'true') return;
+      btn.dataset.magneticReady = 'true';
+      btn.classList.add('magnetic-control');
+
+      btn.addEventListener('mousemove', function(e){
+        if(document.documentElement.classList.contains('reduce-motion') || btn.disabled) return;
+        var rect = btn.getBoundingClientRect();
+        var centerX = rect.left + rect.width / 2;
+        var centerY = rect.top + rect.height / 2;
+        var dx = e.clientX - centerX;
+        var dy = e.clientY - centerY;
+        var moveX = dx * 0.22;
+        var moveY = dy * 0.22;
+        var rotateY = Math.max(-7, Math.min(7, dx * 0.055));
+        var rotateX = Math.max(-7, Math.min(7, -dy * 0.055));
+        btn.style.transform = 'translate3d('+moveX+'px,'+moveY+'px,0) perspective(700px) rotateX('+rotateX+'deg) rotateY('+rotateY+'deg)';
+      });
+
+      btn.addEventListener('mouseleave', function(){
+        btn.style.transform = '';
+        btn.classList.remove('pressed');
+      });
+
+      btn.addEventListener('pointerdown', function(){
+        if(document.documentElement.classList.contains('reduce-motion') || btn.disabled) return;
+        btn.classList.add('pressed');
+      });
+
+      btn.addEventListener('pointerup', function(){
+        btn.classList.remove('pressed');
+      });
+
+      btn.addEventListener('pointercancel', function(){
+        btn.classList.remove('pressed');
+      });
+    });
+  }
+
+  function enterSite(){
+    if(intro.classList.contains('opening')) return;
+    intro.classList.add('opening');
+    window.setTimeout(function(){ intro.classList.add('hidden'); document.body.classList.remove('locked'); }, 900);
+  }
+  enterBtn.addEventListener('click', enterSite);
+  navLogo.addEventListener('click', function(){ location.hash = 'home'; showRoute('home'); });
+  initMagneticButtons();
+
+})();
+</script>
+</body>
+</html>

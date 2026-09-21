@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Support - Atendimento</title>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --color-bg: #F5F5F5;
+      --color-surface: #FAF9F6;
+      --color-black: #1A1A1A;
+      --color-black-deep: #000000;
+      --color-blue: #003366;
+      --color-blue-light: #0056B3;
+      --color-text: #1A1A1A;
+      --color-muted: #666666;
+      --color-border: #D8D8D8;
+    }
+
+    body {
+      background-color: var(--color-bg);
+      background-image: radial-gradient(circle at 50% 0%, rgba(0, 51, 102, 0.03) 0%, transparent 70%);
+      color: var(--color-text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .btn-3d-soft {
+      background: linear-gradient(145deg, var(--color-black), var(--color-black-deep));
+      color: #FFF;
+      border-radius: 20px;
+      padding: 12px 24px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--color-black-deep), 0 8px 15px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-3d-soft:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 var(--color-black-deep), 0 12px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-3d-soft:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 var(--color-black-deep), 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-3d-soft:disabled {
+      background: var(--color-muted);
+      box-shadow: 0 4px 0 #444, 0 8px 15px rgba(0, 0, 0, 0.1);
+      cursor: not-allowed;
+      transform: translateY(0);
+    }
+
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, label:focus-visible {
+      outline: 3px solid var(--color-blue-light) !important;
+      outline-offset: 2px !important;
+    }
+
+    .glass-panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 24px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 10px 20px rgba(0, 0, 0, 0.04);
+    }
+
+    .chat-bubble-bot {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      border-radius: 16px 16px 16px 4px;
+    }
+
+    .chat-bubble-user {
+      background: var(--color-blue);
+      color: #FFF;
+      border-radius: 16px 16px 4px 16px;
+    }
+
+    .chat-bubble-system {
+      background: transparent;
+      color: var(--color-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      font-style: italic;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const DB = {
+      get: (key, def) => JSON.parse(localStorage.getItem(key)) || def,
+      set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
+      init: () => {
+        if (!localStorage.getItem('nexus_tickets_v4')) {
+            DB.set('nexus_tickets_v4', []);
+            localStorage.removeItem('nexus_tickets');
+            localStorage.removeItem('nexus_tickets_v2');
+            localStorage.removeItem('nexus_tickets_v3');
+            localStorage.removeItem('current_ticket');
+        }
+        if (!localStorage.getItem('nexus_users')) DB.set('nexus_users', []);
+      },
+      createTicket: (data) => {
+        const tickets = DB.get('nexus_tickets_v4', []);
+        const tokenNumber = tickets.length; 
+        const newTicket = { 
+          ...data, 
+          id: `TOKEN-${tokenNumber}`, 
+          tokenIndex: tokenNumber,
+          status: "QUEUE_PENDING", 
+          createdAt: new Date().toISOString(), 
+          messages: data.messages || [] 
+        };
+        tickets.push(newTicket);
+        DB.set('nexus_tickets_v4', tickets);
+        return newTicket;
+      },
+      claimTicket: (ticketId, agentId) => {
+        const tickets = DB.get('nexus_tickets_v4', []);
+        const ticketIndex = tickets.findIndex(t => t.id === ticketId);
+        if (ticketIndex === -1) return { success: false, error: "Ticket não encontrado." };
+        
+        const ticket = tickets[ticketIndex];
+        ticket.status = "PRIVATE_SESSION";
+        ticket.claimedBy = agentId;
+        ticket.claimedAt = new Date().toISOString();
+        tickets[ticketIndex] = ticket;
+        
+        DB.set('nexus_tickets_v4', tickets);
+        return { success: true, ticket };
+      },
+      addMessage: (ticketId, message) => {
+        const tickets = DB.get('nexus_tickets_v4', []);
+        const t = tickets.find(t => t.id === ticketId);
+        if (t) {
+          t.messages.push(message);
+          DB.set('nexus_tickets_v4', tickets);
+        }
+      },
+      closeTicket: (ticketId) => {
+          const tickets = DB.get('nexus_tickets_v4', []);
+          const t = tickets.find(t => t.id === ticketId);
+          if(t) {
+              t.status = "CLOSED";
+              DB.set('nexus_tickets_v4', tickets);
+          }
+      }
+    };
+
+    const App = () => {
+      const [view, setView] = useState(() => window.location.hash === '#operador' ? 'operator' : 'landing');
+      
+      useEffect(() => { 
+        DB.init(); 
+        const handleHashChange = () => {
+          if (window.location.hash === '#operador') setView('operator');
+          else setView(prev => prev === 'operator' ? 'landing' : prev);
+        };
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+      }, []);
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          <header className="bg-[#FAF9F6] border-b border-[#D8D8D8] px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+            <div className="font-bold text-xl tracking-tight flex items-center gap-2 cursor-pointer" onClick={() => window.location.hash = ''}>
+              <div className="w-3 h-3 rounded-full bg-[#003366]"></div>
+              NEXUS SUPPORT
+            </div>
+            {view === 'operator' && (
+              <span className="text-xs font-bold text-[#DC2626] uppercase tracking-wider">Ambiente Restrito</span>
+            )}
+          </header>
+          <main className="flex-grow flex flex-col">
+            {view === 'landing' && <LandingPage onStart={() => setView('client')} />}
+            {view === 'client' && <ClientAuthOrApp />}
+            {view === 'operator' && <OperatorApp />}
+          </main>
+        </div>
+      );
+    };
+
+    const LandingPage = ({ onStart }) => (
+      <div className="flex-grow flex items-center justify-center p-6">
+        <div className="max-w-2xl text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-[#1A1A1A] leading-tight">
+            Suporte inteligente com IA e operadores.
+          </h1>
+          <p className="text-lg text-[#666666] mb-10 max-w-xl mx-auto">
+            Faça login para iniciar seu atendimento de forma rápida e segura.
+          </p>
+          <button className="btn-3d-soft text-lg px-8 py-4" onClick={onStart}>
+            Entrar no Atendimento
+          </button>
+        </div>
+      </div>
+    );
+
+    const ClientAuthOrApp = () => {
+      const [currentUser, setCurrentUser] = useState(() => JSON.parse(sessionStorage.getItem('client_logged')) || null);
+
+      if (!currentUser) {
+        return <ClientAuthScreen onLogin={(user) => { sessionStorage.setItem('client_logged', JSON.stringify(user)); setCurrentUser(user); }} />;
+      }
+
+      return <ClientDashboard user={currentUser} onLogout={() => { sessionStorage.removeItem('client_logged'); setCurrentUser(null); }} />;
+    };
+
+    const ClientAuthScreen = ({ onLogin }) => {
+      const [isRegister, setIsRegister] = useState(false);
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const users = DB.get('nexus_users', []);
+
+        if (isRegister) {
+          if (users.find(u => u.email === email)) {
+            alert("Este e-mail já está cadastrado. Faça login.");
+            return;
+          }
+          const newUser = { email, password };
+          users.push(newUser);
+          DB.set('nexus_users', users);
+          alert("Conta criada com sucesso!");
+          onLogin(newUser);
+        } else {
+          const found = users.find(u => u.email === email && u.password === password);
+          if (found) {
+            onLogin(found);
+          } else {
+            alert("E-mail ou senha incorretos. Verifique seus dados ou cadastre-se.");
+          }
+        }
+      };
+
+      return (
+        <div className="flex-grow flex items-center justify-center p-6">
+          <div className="glass-panel p-8 max-w-sm w-full">
+            <h2 className="text-xl font-bold mb-6 text-center">{isRegister ? 'Criar Conta' : 'Login do Cliente'}</h2>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="text-xs font-bold text-[#1A1A1A]">E-mail / Gmail</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required placeholder="seu@email.com" className="w-full px-4 py-3 border border-[#D8D8D8] bg-[#FAF9F6] rounded-xl mt-1 outline-none" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[#1A1A1A]">Senha</label>
+                <input type="password" value={password} onChange={e => setPassword(e.target.value)} required placeholder="******" className="w-full px-4 py-3 border border-[#D8D8D8] bg-[#FAF9F6] rounded-xl mt-1 outline-none" />
+              </div>
+              <button type="submit" className="btn-3d-soft w-full mt-2">{isRegister ? 'Registrar' : 'Entrar'}</button>
+            </form>
+            <div className="text-center mt-4">
+              <button onClick={() => setIsRegister(!isRegister)} className="text-xs text-[#0056B3] underline">
+                {isRegister ? 'Já tem uma conta? Faça login' : 'Não tem conta? Cadastre-se'}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ClientDashboard = ({ user, onLogout }) => {
+      const [ticketId, setTicketId] = useState(null);
+
+      if (!ticketId) {
+        return <TriageFlow user={user} onComplete={(id) => setTicketId(id)} onLogout={onLogout} />;
+      }
+      return <ActiveClientTicket ticketId={ticketId} onEnd={() => setTicketId(null)} />;
+    };
+
+    const TriageFlow = ({ user, onComplete, onLogout }) => {
+      const [messages, setMessages] = useState([
+        { id: '1', sender: 'bot', content: `Olá ${user.email}! Qual é o assunto do seu problema hoje?` }
+      ]);
+
+      const handleOption = (opt) => {
+        const newMessages = [
+          ...messages, 
+          { id: Date.now().toString(), sender: 'customer', content: opt },
+          { id: (Date.now()+1).toString(), sender: 'bot', content: 'Resumo registrado pela IA. Direcionando para o operador humano...' }
+        ];
+        setMessages(newMessages);
+        
+        setTimeout(() => {
+          const ticket = DB.createTicket({ 
+            customerEmail: user.email, 
+            category: opt, 
+            summary: `Categoria escolhida: ${opt}`,
+            messages: newMessages 
+          });
+          onComplete(ticket.id);
+        }, 1200);
+      };
+
+      return (
+        <div className="flex-grow flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-lg flex justify-between mb-2 text-xs">
+            <span>Logado como: <b>{user.email}</b></span>
+            <button onClick={onLogout} className="text-red-600 underline">Sair da Conta</button>
+          </div>
+          <div className="glass-panel w-full max-w-lg h-[550px] flex flex-col overflow-hidden">
+            <div className="bg-[#FAF9F6] border-b border-[#D8D8D8] p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center">🤖</div>
+              <div>
+                <h3 className="font-bold text-sm">IA DE TRIAGEM</h3>
+                <span className="text-xs text-[#0056B3]">Ativo</span>
+              </div>
+            </div>
+            <div className="flex-grow p-4 overflow-y-auto flex flex-col gap-4">
+              {messages.map(m => (
+                <div key={m.id} className={`max-w-[80%] ${m.sender === 'customer' ? 'self-end' : 'self-start'}`}>
+                  <div className={`p-3 text-sm shadow-sm ${m.sender === 'customer' ? 'chat-bubble-user' : 'chat-bubble-bot'}`}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-2 mt-2 self-start">
+                {['Pagamento', 'Problema Técnico', 'Conta', 'Outros'].map(opt => (
+                  <button key={opt} onClick={() => handleOption(opt)} className="px-3 py-1.5 text-xs border border-[#0056B3] text-[#0056B3] rounded-full hover:bg-[#0056B3] hover:text-white transition-colors">
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const ActiveClientTicket = ({ ticketId, onEnd }) => {
+      const [ticket, setTicket] = useState(null);
+      const [input, setInput] = useState('');
+      const scrollRef = useRef(null);
+
+      // Atualização em tempo real síncrona com o localStorage a cada 1 segundo
+      useEffect(() => {
+        const fetchTicket = () => {
+          const tickets = DB.get('nexus_tickets_v4', []);
+          const current = tickets.find(t => t.id === ticketId);
+          if (current) setTicket(current);
+        };
+        fetchTicket();
+        const interval = setInterval(fetchTicket, 1000);
+        return () => clearInterval(interval);
+      }, [ticketId]);
+
+      useEffect(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, [ticket?.messages]);
+
+      if (!ticket) return <div className="p-6 text-center">Carregando...</div>;
+
+      const handleSend = (e) => {
+        e.preventDefault();
+        if (!input.trim() || ticket.status === 'CLOSED') return;
+        DB.addMessage(ticket.id, { 
+            id: Date.now().toString(), 
+            sender: 'customer', 
+            content: input.trim(), 
+            timestamp: new Date().toISOString() 
+        });
+        setInput('');
+        // Atualiza estado local imediatamente após enviar
+        const tickets = DB.get('nexus_tickets_v4', []);
+        setTicket(tickets.find(t => t.id === ticketId));
+      };
+
+      return (
+        <div className="flex-grow flex items-center justify-center p-4">
+          <div className="glass-panel w-full max-w-lg h-[600px] flex flex-col overflow-hidden">
+            <div className="bg-[#FAF9F6] border-b border-[#D8D8D8] p-4 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-sm">ATENDIMENTO HUMANO</h3>
+                <span className="text-xs text-[#0056B3]">Token: {ticket.id}</span>
+              </div>
+              {ticket.status === 'CLOSED' && (
+                <button onClick={onEnd} className="text-xs text-blue-600 underline">Novo Atendimento</button>
+              )}
+            </div>
+            
+            <div className="flex-grow p-4 overflow-y-auto flex flex-col gap-4" ref={scrollRef}>
+              {ticket.messages.map(m => (
+                <div key={m.id} className={`max-w-[80%] ${m.sender === 'customer' ? 'self-end' : m.sender === 'agent' ? 'self-start' : 'self-center w-full'}`}>
+                  <div className={`p-3 text-sm shadow-sm ${m.sender === 'customer' ? 'chat-bubble-user' : m.sender === 'agent' ? 'chat-bubble-bot' : 'chat-bubble-system'}`}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {ticket.status !== 'CLOSED' ? (
+              <form onSubmit={handleSend} className="p-4 border-t border-[#D8D8D8] bg-[#FAF9F6] flex gap-2">
+                <input type="text" value={input} onChange={e => setInput(e.target.value)} className="flex-grow px-4 py-2 rounded-xl border border-[#D8D8D8] outline-none" placeholder="Digite sua mensagem..." />
+                <button type="submit" className="bg-[#003366] text-white px-4 py-2 rounded-xl font-semibold">Enviar</button>
+              </form>
+            ) : (
+              <div className="p-4 bg-gray-100 text-center text-sm text-gray-600">
+                Atendimento encerrado.
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    const OperatorApp = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('op_logged') === 'true');
+      const [tickets, setTickets] = useState([]);
+      const [activeTicket, setActiveTicket] = useState(null);
+      const agentId = "OP-101";
+
+      const fetchTickets = () => setTickets(DB.get('nexus_tickets_v4', []));
+
+      // Atualização contínua dos tokens e mensagens para o operador a cada 1 segundo
+      useEffect(() => {
+        if (isAuthenticated) {
+            fetchTickets();
+            const interval = setInterval(fetchTickets, 1000);
+            return () => clearInterval(interval);
+        }
+      }, [isAuthenticated]);
+
+      const handleLogin = (e) => {
+        e.preventDefault();
+        if (e.target.email.value === "admin@nexus.com" && e.target.password.value === "senha123") {
+          sessionStorage.setItem('op_logged', 'true');
+          setIsAuthenticated(true);
+        } else {
+          alert("Credenciais inválidas (use admin@nexus.com / senha123)");
+        }
+      };
+
+      const handleClaim = (id) => {
+        DB.claimTicket(id, agentId);
+        setActiveTicket(id);
+        fetchTickets();
+      };
+
+      if (!isAuthenticated) {
+        return (
+          <div className="flex-grow flex items-center justify-center p-6">
+            <div className="glass-panel p-8 max-w-sm w-full">
+              <h2 className="text-xl font-bold mb-6 text-center">Painel do Operador</h2>
+              <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <input name="email" type="email" placeholder="admin@nexus.com" required className="w-full px-4 py-3 border border-[#D8D8D8] rounded-xl outline-none" />
+                <input name="password" type="password" placeholder="senha123" required className="w-full px-4 py-3 border border-[#D8D8D8] rounded-xl outline-none" />
+                <button type="submit" className="btn-3d-soft w-full">Entrar</button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col flex-grow">
+          <div className="bg-[#1A1A1A] text-white px-6 py-2 flex justify-between items-center text-xs">
+            <span>Operador: {agentId}</span>
+            <button onClick={() => { sessionStorage.removeItem('op_logged'); setIsAuthenticated(false); }} className="underline">Sair</button>
+          </div>
+          <div className="flex-grow flex p-6 gap-6 h-[calc(100vh-80px)]">
+            <div className="w-1/3 overflow-y-auto space-y-3">
+              {tickets.length === 0 ? (
+                <div className="text-center text-gray-500 py-10">Nenhum token gerado ainda.</div>
+              ) : (
+                tickets.map(t => (
+                  <div key={t.id} className={`glass-panel p-4 cursor-pointer ${activeTicket === t.id ? 'ring-2 ring-blue-600' : ''}`} onClick={() => setActiveTicket(t.id)}>
+                    <div className="flex justify-between font-bold text-sm">
+                      <span>{t.id}</span>
+                      <span className="text-xs text-blue-600">{t.status}</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">Cliente: {t.customerEmail}</div>
+                    <div className="text-xs bg-gray-100 p-2 rounded mt-2"><b>Resumo IA:</b> {t.summary}</div>
+                    {t.status === 'QUEUE_PENDING' && (
+                      <button className="w-full bg-black text-white text-xs py-2 rounded mt-3" onClick={(e) => { e.stopPropagation(); handleClaim(t.id); }}>
+                        Assumir Atendimento
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="w-2/3 glass-panel h-full flex flex-col overflow-hidden">
+              {activeTicket ? (
+                <OperatorChat ticketId={activeTicket} tickets={tickets} agentId={agentId} onUpdate={fetchTickets} />
+              ) : (
+                <div className="flex-grow flex items-center justify-center text-gray-500">Selecione um Token na lista ao lado.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const OperatorChat = ({ ticketId, tickets, agentId, onUpdate }) => {
+      const ticket = tickets.find(t => t.id === ticketId);
+      const [input, setInput] = useState('');
+      const scrollRef = useRef(null);
+
+      useEffect(() => {
+        if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }, [ticket?.messages]);
+
+      if (!ticket) return null;
+
+      const handleSend = (e) => {
+        e.preventDefault();
+        if (!input.trim() || ticket.status === 'CLOSED') return;
+        DB.addMessage(ticket.id, { 
+            id: Date.now().toString(), 
+            sender: 'agent', 
+            content: input.trim(), 
+            timestamp: new Date().toISOString() 
+        });
+        setInput('');
+        onUpdate();
+      };
+
+      const handleClose = () => {
+        DB.closeTicket(ticket.id);
+        onUpdate();
+      };
+
+      return (
+        <>
+          <div className="bg-[#FAF9F6] border-b border-[#D8D8D8] p-4 flex justify-between items-center">
+            <div>
+              <h2 className="font-bold text-sm">{ticket.id} - {ticket.customerEmail}</h2>
+              <span className="text-xs text-gray-600">Resumo da IA: {ticket.summary}</span>
+            </div>
+            <button onClick={handleClose} className="text-xs border border-red-600 text-red-600 px-3 py-1 rounded-full">Encerrar</button>
+          </div>
+          
+          <div className="flex-grow p-6 overflow-y-auto flex flex-col gap-4 bg-[#F5F5F5]" ref={scrollRef}>
+            {ticket.messages.map(m => (
+              <div key={m.id} className={`max-w-[70%] ${m.sender === 'customer' ? 'self-start' : m.sender === 'agent' ? 'self-end' : 'self-center w-full'}`}>
+                <div className={`p-3 text-sm shadow-sm ${m.sender === 'customer' ? 'chat-bubble-bot' : m.sender === 'agent' ? 'chat-bubble-user' : 'chat-bubble-system'}`}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <form onSubmit={handleSend} className="p-4 border-t border-[#D8D8D8] bg-[#FAF9F6] flex gap-2">
+            <input type="text" value={input} onChange={e => setInput(e.target.value)} disabled={ticket.status === 'CLOSED'} className="flex-grow px-4 py-2 rounded-xl border border-[#D8D8D8] outline-none" placeholder="Responder como operador..." />
+            <button type="submit" disabled={ticket.status === 'CLOSED'} className="bg-black text-white px-6 py-2 rounded-xl font-semibold">Enviar</button>
+          </form>
+        </>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
